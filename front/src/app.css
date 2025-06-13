@@ -1,0 +1,68 @@
+/* Цвета-переменные: настроите под свой дизайн */
+:root {
+  --primary-50: #eff6ff;   /* светло-голубой */
+  --secondary-50: #fdf2f8; /* нежно-розовый  */
+  --purple-50: #f5f3ff;    /* сиреневый-50  */
+
+  --primary-500: #3b82f6;  /* насыщенный голубой */
+  --secondary-500: #ec4899;/* розовый-500        */
+}
+
+/* Загрузка / сплэш-экран */
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--primary-50) 0%,
+    var(--secondary-50) 50%,
+    var(--purple-50) 100%
+  );
+}
+
+.loader-wrapper {
+  text-align: center;
+}
+
+.loader-outer {
+  width: 4rem;        /* 64 px */
+  height: 4rem;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    var(--primary-500),
+    var(--secondary-500)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  animation: pulse-gentle 1.8s ease-in-out infinite;
+}
+
+.loader-inner {
+  width: 2rem;        /* 32 px */
+  height: 2rem;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.loading-text {
+  color: #4b5563;     /* нейтральный серый */
+  font-weight: 500;
+  font-family: system-ui, sans-serif;
+}
+
+/* Анимация мягкого пульса */
+@keyframes pulse-gentle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.9;
+  }
+}

@@ -1,0 +1,48 @@
+/* Переменные цвета (можно вынести в общий CSS, если уже есть) */
+:root {
+  --primary-50:  #eff6ff;
+  --secondary-50:#fdf2f8;
+  --purple-50:   #f5f3ff;
+}
+
+/* Корневой контейнер страницы авторизации */
+.auth-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    var(--primary-50) 0%,
+    var(--secondary-50) 50%,
+    var(--purple-50) 100%
+  );
+  overflow: hidden;         /* прячем декоративный фон за краями */
+}
+
+/* SVG-паттерн «точечная сетка» */
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+  opacity: 0.5;
+  pointer-events: none;     /* чтобы клик сквозь фон попадал на формы */
+}
+
+/* Обёртка с формой входа/регистрации */
+.auth-content {
+  position: relative;       /* «поднимаем» над .auth-bg */
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;         /* ограничиваем ширину формы */
+  animation: fade-in 0.6s ease-out both;
+}
+
+/* Простая анимация появления */
+@keyframes fade-in {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0);    }
+}

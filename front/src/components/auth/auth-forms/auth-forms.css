@@ -1,0 +1,193 @@
+/* ---------- 1. Палитра и базовые переменные ---------- */
+:root {
+  --primary-50:  #eff6ff;
+  --secondary-50:#fdf2f8;
+  --purple-50:   #f5f3ff;
+  --primary-500: #3b82f6;
+  --secondary-500:#ec4899;
+  --gray-50:     #f9fafb;
+  --gray-100:    #f3f4f6;
+  --gray-300:    #d1d5db;
+  --gray-600:    #4b5563;
+  --gray-700:    #374151;
+  --error-bg:    #fef2f2;
+  --error-text:  #dc2626;
+}
+
+/* ---------- 2. Обёртка и карточка ---------- */
+.form-wrapper {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.form-card {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(4px);
+}
+
+/* ---------- 3. Заголовок ---------- */
+.form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-icon-wrap {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+}
+
+.form-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  margin-bottom: 0.25rem;
+}
+
+.form-subtitle {
+  color: var(--gray-600);
+}
+
+/* ---------- 4. Поля формы ---------- */
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+/* Группа с иконкой / кнопкой */
+.input-group {
+  position: relative;
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-600);
+}
+
+.toggle-password-button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--gray-600);
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* дополнительные отступы, если слева иконка */
+.with-left-icon { padding-left: 2.75rem; }
+
+/* чтоб не залипала кнопка / правый отступ */
+.with-right-button { padding-right: 2.75rem; }
+
+/* ---------- 5. Двухколоночная сетка ---------- */
+.two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* ---------- 6. Кнопки ---------- */
+.submit-button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.submit-button:hover:not(:disabled) { filter: brightness(0.95); transform: scale(1.05); }
+.submit-button:disabled          { opacity: 0.6; cursor: default; }
+
+/* спиннер */
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  border: 2px solid transparent;
+  border-bottom-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- 7. Ошибки ---------- */
+.form-error {
+  background: var(--error-bg);
+  color: var(--error-text);
+  text-align: center;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* ---------- 8. Футер ---------- */
+.form-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--gray-600);
+  font-size: 0.9rem;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 0.25rem;
+  color: var(--primary-500);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.link-button:hover { color: var(--secondary-500); }
