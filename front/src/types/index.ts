@@ -1,10 +1,10 @@
 export interface User {
-  id: string;
+  id: number;
   email: string;
-  name: string;
+  full_name: string;
   timezone: string;
-  gender: 'male' | 'female' | 'other';
-  createdAt: Date;
+  gender: string;
+  is_active: boolean;
 }
 
 export interface Message {
@@ -45,7 +45,19 @@ export interface AuthContextType {
 export interface RegisterData {
   email: string;
   password: string;
-  name: string;
+  full_name: string;
   timezone: string;
-  gender: 'male' | 'female' | 'other';
+  gender: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+}
+
+export interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
 }

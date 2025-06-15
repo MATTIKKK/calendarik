@@ -3,54 +3,62 @@ import { Mail, Lock, User, Globe, Eye, EyeOff, UserPlus } from 'lucide-react';
 import './auth-forms.css';
 import { RegisterData } from '../../../types';
 import { useAuth } from '../../../contexts/AuthContext';
+import moment from 'moment-timezone';
+import { Alert } from '../../common/Alert';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
 }
 
-const timezones = [
-  'UTC',
-  'America/New_York',
-  'America/Los_Angeles',
-  'Europe/London',
-  'Europe/Paris',
-  'Asia/Tokyo',
-  'Asia/Shanghai',
-  'Australia/Sydney',
-];
+const timezones = moment.tz.names().sort();
 
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
+export const RegisterForm: React.FC<RegisterFormProps> = ({
+  onSwitchToLogin,
+}) => {
   const [formData, setFormData] = useState<RegisterData>({
     email: '',
     password: '',
-    name: '',
+    full_name: '',
     timezone: 'UTC',
     gender: 'other',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [alert, setAlert] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const { register, loading } = useAuth();
 
   const update = (field: keyof RegisterData, value: string) =>
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setAlert(null);
 
     if (formData.password !== confirmPassword) {
-      setError('Passwords do not match');
+      setAlert({ type: 'error', message: 'Passwords do not match' });
       return;
     }
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setAlert({
+        type: 'error',
+        message: 'Password must be at least 6 characters long',
+      });
       return;
     }
     try {
       await register(formData);
-    } catch {
-      setError('Registration failed. Please try again.');
+      setAlert({
+        type: 'success',
+        message: 'Registration successful! Redirecting...',
+      });
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: 'Registration failed. Please try again.',
+      });
     }
   };
 
@@ -65,6 +73,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
           <p className="form-subtitle">Create your account to get started</p>
         </header>
 
+        {alert && (
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
+
         <form onSubmit={handleSubmit} className="form-body">
           <div className="form-field">
             <label className="form-label">Full Name</label>
@@ -72,8 +88,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <User className="input-icon-left" size={20} />
               <input
                 type="text"
-                value={formData.name}
-                onChange={e => update('name', e.target.value)}
+                value={formData.full_name}
+                onChange={(e) => update('full_name', e.target.value)}
                 className="form-input with-left-icon"
                 placeholder="Enter your full name"
                 required
@@ -88,7 +104,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <input
                 type="email"
                 value={formData.email}
-                onChange={e => update('email', e.target.value)}
+                onChange={(e) => update('email', e.target.value)}
                 className="form-input with-left-icon"
                 placeholder="Enter your email"
                 required
@@ -103,10 +119,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
                 <Globe className="input-icon-left" size={20} />
                 <select
                   value={formData.timezone}
-                  onChange={e => update('timezone', e.target.value)}
+                  onChange={(e) => update('timezone', e.target.value)}
                   className="form-select with-left-icon"
                 >
-                  {timezones.map(tz => (
+                  {timezones.map((tz) => (
                     <option key={tz} value={tz}>
                       {tz}
                     </option>
@@ -119,7 +135,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <label className="form-label">Gender</label>
               <select
                 value={formData.gender}
-                onChange={e => update('gender', e.target.value)}
+                onChange={(e) => update('gender', e.target.value)}
                 className="form-select"
               >
                 <option value="male">Male</option>
@@ -136,7 +152,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
-                onChange={e => update('password', e.target.value)}
+                onChange={(e) => update('password', e.target.value)}
                 className="form-input with-left-icon with-right-button"
                 placeholder="Create a password"
                 required
@@ -158,15 +174,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="form-input with-left-icon"
                 placeholder="Confirm your password"
                 required
               />
             </div>
           </div>
-
-          {error && <div className="form-error">{error}</div>}
 
           <button type="submit" disabled={loading} className="submit-button">
             {loading ? (

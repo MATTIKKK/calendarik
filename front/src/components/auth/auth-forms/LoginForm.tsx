@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import './auth-forms.css';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Alert } from '../../common/Alert';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -11,16 +12,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [alert, setAlert] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const { login, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setAlert(null);
     try {
       await login(email, password);
-    } catch {
-      setError('Invalid email or password');
+      setAlert({
+        type: 'success',
+        message: 'Login successful! Redirecting...',
+      });
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Invalid email or password' });
     }
   };
 
@@ -32,8 +40,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             <LogIn size={32} color="#fff" />
           </div>
           <h2 className="form-title">Welcome Back</h2>
-          <p className="form-subtitle">Sign in to continue with your AI assistant</p>
+          <p className="form-subtitle">
+            Sign in to continue with your AI assistant
+          </p>
         </header>
+
+        {alert && (
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="form-body">
           <div className="form-field">
@@ -43,7 +61,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 className="form-input with-left-icon"
                 placeholder="Enter your email"
                 required
@@ -58,7 +76,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 className="form-input with-left-icon with-right-button"
                 placeholder="Enter your password"
                 required
@@ -73,8 +91,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             </div>
           </div>
 
-          {error && <div className="form-error">{error}</div>}
-
           <button type="submit" disabled={loading} className="submit-button">
             {loading ? (
               <>
@@ -87,7 +103,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         </form>
 
         <footer className="form-footer">
-          <span>Don’t have an account? </span>
+          <span>Don't have an account? </span>
           <button onClick={onSwitchToRegister} className="link-button">
             Sign up
           </button>

@@ -6,9 +6,9 @@ from typing import Optional
 from jose import JWTError
 
 from app.core.database import get_db
-from app.core.security import verify_password, get_password_hash, create_access_token, decode_access_token
-from app.models.models import User
-from app.schemas.auth import UserCreate, Token, UserResponse
+from app.core.security import verify_password, get_password_hash, create_tokens, decode_token
+from app.models import User
+from app.schemas.auth import UserCreate, Token, UserResponse, RefreshToken, TokenPayload
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -26,7 +26,9 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = User(
         email=user.email,
         hashed_password=hashed_password,
-        full_name=user.full_name
+        full_name=user.full_name,
+        timezone=user.timezone,
+        gender=user.gender
     )
     
     db.add(db_user)
@@ -47,12 +49,44 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token = create_access_token(
-        data={"sub": user.email},
-        expires_delta=timedelta(minutes=30)
+    access_token, refresh_token = create_tokens(user.email)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(
+    refresh_token_data: RefreshToken,
+    db: Session = Depends(get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    payload = decode_token(refresh_token_data.refresh_token)
+    if not payload or payload.get("type") != "refresh":
+        raise credentials_exception
+        
+    email: str = payload.get("sub")
+    if email is None:
+        raise credentials_exception
+        
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise credentials_exception
+        
+    access_token, new_refresh_token = create_tokens(user.email)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -65,8 +99,8 @@ def get_current_user(
     )
     
     try:
-        payload = decode_access_token(token)
-        if payload is None:
+        payload = decode_token(token)
+        if payload is None or payload.get("type") != "access":
             raise credentials_exception
         email: str = payload.get("sub")
         if email is None:

@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.routes.auth import get_current_user
-from app.models.models import User, CalendarEvent
+from app.models import User, CalendarEvent
 from app.schemas.calendar import CalendarEventCreate, CalendarEventUpdate, CalendarEventResponse
 
 router = APIRouter()

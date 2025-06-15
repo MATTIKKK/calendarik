@@ -1,7 +1,136 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType, RegisterData } from '../types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import { User, RegisterData } from '../types';
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => void;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const API_URL = 'http://localhost:8000/api';
+
+let refreshTimeout: NodeJS.Timeout;
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const setTokens = (accessToken: string, refreshToken: string) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    setupRefreshToken();
+  };
+
+  const setupRefreshToken = () => {
+    if (refreshTimeout) clearTimeout(refreshTimeout);
+
+    // Refresh 1 minute before token expires
+    refreshTimeout = setTimeout(refreshAccessToken, 29 * 60 * 1000);
+  };
+
+  const refreshAccessToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        setUser(null);
+        return;
+      }
+
+      const response = await axios.post(`${API_URL}/auth/refresh`, {
+        refresh_token: refreshToken,
+      });
+
+      const { access_token, refresh_token } = response.data;
+      setTokens(access_token, refresh_token);
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      logout();
+    }
+  };
+
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(response.data);
+      setupRefreshToken();
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        await refreshAccessToken();
+        await fetchUser(); 
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+    return () => {
+      if (refreshTimeout) clearTimeout(refreshTimeout);
+    };
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/auth/token`,
+        new URLSearchParams({
+          username: email,
+          password: password,
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
+      const { access_token, refresh_token } = response.data;
+      setTokens(access_token, refresh_token);
+      await fetchUser();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (data: RegisterData) => {
+    setLoading(true);
+    try {
+      await axios.post(`${API_URL}/auth/register`, data);
+      await login(data.email, data.password);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    if (refreshTimeout) clearTimeout(refreshTimeout);
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -9,103 +138,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      // Mock API call - replace with actual FastAPI endpoint
-      const response = await mockApiCall('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const userData = response.user;
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (error) {
-      throw new Error('Login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (userData: RegisterData) => {
-    setLoading(true);
-    try {
-      // Mock API call - replace with actual FastAPI endpoint
-      const response = await mockApiCall('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-      
-      const newUser = response.user;
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
-    } catch (error) {
-      throw new Error('Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// Mock API function - replace with actual API calls
-const mockApiCall = async (endpoint: string, options: RequestInit) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  if (endpoint === '/auth/login') {
-    return {
-      user: {
-        id: '1',
-        email: 'user@example.com',
-        name: 'John Doe',
-        timezone: 'UTC',
-        gender: 'male',
-        createdAt: new Date(),
-      }
-    };
-  }
-  
-  if (endpoint === '/auth/register') {
-    const userData = JSON.parse(options.body as string);
-    return {
-      user: {
-        id: Math.random().toString(36).substr(2, 9),
-        ...userData,
-        createdAt: new Date(),
-      }
-    };
-  }
-  
-  throw new Error('Endpoint not found');
 };

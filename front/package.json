@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lucide-react": "^0.344.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "axios": "^1.10.0",
     "date-fns": "^3.2.0",
+    "lucide-react": "^0.344.0",
+    "moment-timezone": "^0.6.0",
+    "react": "^18.3.1",
     "react-calendar": "^4.8.0",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^6.20.1"
   },
   "devDependencies": {
