@@ -13,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const API_URL = 'http://localhost:8000/api';
 
-let refreshTimeout: NodeJS.Timeout;
+let refreshTimeout: ReturnType<typeof setTimeout>;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Failed to fetch user:', error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         await refreshAccessToken();
-        await fetchUser(); 
+        await fetchUser();
       }
     }
   };

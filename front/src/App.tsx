@@ -1,41 +1,77 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
 import { MainLayout } from './components/layout/MainLayout';
 import './app.css'; // подключаем общие стили
 
-const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+// Компонент для защищенных роутов
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const { user } = useAuth();
+  const token = localStorage.getItem('accessToken');
 
-  if (loading) {
-    return (
-      <div className="app-loading">
-        <div className="loader-wrapper">
-          <div className="loader-outer">
-            <div className="loader-inner" />
-          </div>
-          <p className="loading-text">Loading your AI assistant...</p>
-        </div>
-      </div>
-    );
+  if (!token || !user) {
+    // Если нет токена или пользователя, редиректим на страницу логина
+    return <Navigate to="/login" replace />;
   }
 
-  return user ? (
-    <Router>
-      <Routes>
-        <Route path="/*" element={<MainLayout />} />
-      </Routes>
-    </Router>
-  ) : (
-    <AuthPage />
+  return <>{children}</>;
+};
+
+// Компонент для публичных роутов (доступных только неавторизованным)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const token = localStorage.getItem('accessToken');
+
+  if (token && user) {
+    // Если пользователь авторизован, редиректим на главную
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AppContent: React.FC = () => {
+  return (
+    <Routes>
+      {/* Публичные роуты */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* Защищенные роуты */}
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 };
 
-export default function App() {
+const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   );
-}
+};
+
+export default App;

@@ -40,10 +40,10 @@ export const MainLayout: React.FC = () => {
         {/* profile */}
         <section className="profile">
           <div className="avatar-lg">
-            {user?.name?.charAt(0).toUpperCase()}
+            {user?.full_name?.charAt(0).toUpperCase()}
           </div>
           <div className="profile-info">
-            <h3>{user?.name}</h3>
+            <h3>{user?.full_name}</h3>
             <p>{user?.email}</p>
           </div>
         </section>
@@ -94,7 +94,7 @@ export const MainLayout: React.FC = () => {
                     <div className="settings-grid">
                       <label>
                         Name
-                        <input type="text" value={user?.name || ''} readOnly />
+                        <input type="text" value={user?.full_name || ''} readOnly />
                       </label>
                       <label>
                         Email

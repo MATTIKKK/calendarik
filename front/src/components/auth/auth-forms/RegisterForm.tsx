@@ -4,7 +4,8 @@ import './auth-forms.css';
 import { RegisterData } from '../../../types';
 import { useAuth } from '../../../contexts/AuthContext';
 import moment from 'moment-timezone';
-import { Alert } from '../../common/Alert';
+import { Alert } from '../../common/alert/Alert';
+import { useNavigate } from 'react-router-dom';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -29,6 +30,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     message: string;
   } | null>(null);
   const { register, loading } = useAuth();
+  const navigate = useNavigate();
 
   const update = (field: keyof RegisterData, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -54,7 +56,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         type: 'success',
         message: 'Registration successful! Redirecting...',
       });
-    } catch (error) {
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+    } catch {
       setAlert({
         type: 'error',
         message: 'Registration failed. Please try again.',

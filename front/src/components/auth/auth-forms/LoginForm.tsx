@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import './auth-forms.css';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Alert } from '../../common/Alert';
+import { Alert } from '../../common/alert/Alert';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -17,6 +18,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     message: string;
   } | null>(null);
   const { login, loading } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         type: 'success',
         message: 'Login successful! Redirecting...',
       });
-    } catch (error) {
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+    } catch {
       setAlert({ type: 'error', message: 'Invalid email or password' });
     }
   };
@@ -64,6 +69,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="form-input with-left-icon"
                 placeholder="Enter your email"
+                autoComplete="email"
                 required
               />
             </div>
@@ -80,6 +86,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                 className="form-input with-left-icon with-right-button"
                 placeholder="Enter your password"
                 required
+                autoComplete="current-password"
               />
               <button
                 type="button"
