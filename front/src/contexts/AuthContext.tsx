@@ -1,115 +1,129 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { User } from '../types/user';
 import { RegisterData } from '../types/auth';
 
-interface AuthContextType {
+/* ---------- тип контекста ---------- */
+export type AuthContextType = {
   user: User | null;
+  token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
   logout: () => void;
-}
+  register: (data: RegisterData) => Promise<void>;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const API_URL = 'http://localhost:8000/api';
 
-let refreshTimeout: ReturnType<typeof setTimeout>;
+/* ---------- базовый URL лучше тянуть из env ---------- */
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
+/* ====================================================================== */
+/*                              PROVIDER                                   */
+/* ====================================================================== */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem('accessToken')
+  );
+  const [loading, setLoading] = useState(true);
 
+  /* единственный таймер, «привязанный» к экземпляру провайдера */
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ---------- вспомогалки ---------- */
+
+  /** Ставит/сбрасывает таймер авто-обновления */
+  const scheduleRefresh = (delayMs: number) => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    if (delayMs <= 0) return; // если токен уже протух — не ждём
+    refreshTimer.current = setTimeout(refreshAccessToken, delayMs);
+  };
+
+  /** Сохраняем токены + планируем обновление */
   const setTokens = (accessToken: string, refreshToken: string) => {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
-    setupRefreshToken();
+    setToken(accessToken);
+
+    // смотрим срок жизни access-токена
+    const { exp } = jwtDecode<{ exp: number }>(accessToken);
+    // обновимся за минуту до конца
+    const delayMs = exp * 1000 - Date.now() - 60_000;
+    scheduleRefresh(delayMs);
   };
 
-  const setupRefreshToken = () => {
-    if (refreshTimeout) clearTimeout(refreshTimeout);
+  /* ---------- API-запросы ---------- */
 
-    // Refresh 1 minute before token expires
-    refreshTimeout = setTimeout(refreshAccessToken, 29 * 60 * 1000);
-  };
-
+  /** Получить новый access по refresh */
   const refreshAccessToken = async () => {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        setUser(null);
-        return;
-      }
+      if (!refreshToken) return logout();
 
-      const response = await axios.post(`${API_URL}/auth/refresh`, {
+      const { data } = await axios.post(`${API_URL}/auth/refresh`, {
         refresh_token: refreshToken,
       });
 
-      const { access_token, refresh_token } = response.data;
-      setTokens(access_token, refresh_token);
-    } catch (error) {
-      console.error('Failed to refresh token:', error);
-      logout();
+      setTokens(data.access_token, data.refresh_token);
+    } catch (err) {
+      console.error('Refresh token failed → logout', err);
+      logout(); // не уходим в рекурсию
     }
   };
 
+  /** Подтянуть профиль текущего пользователя */
   const fetchUser = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) return;
 
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setUser(response.data);
-      setupRefreshToken();
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
+
+      setUser(data);
+      // если мы здесь — токен валиден, убедимся что таймер стоит
+      const { exp } = jwtDecode<{ exp: number }>(accessToken);
+      scheduleRefresh(exp * 1000 - Date.now() - 60_000);
+    } catch (err) {
+      console.error('Fetch user failed', err);
+      // Если access протух → сразу пытаемся обновить
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
         await refreshAccessToken();
-        await fetchUser();
       }
     }
   };
 
-  useEffect(() => {
-    fetchUser();
-    return () => {
-      if (refreshTimeout) clearTimeout(refreshTimeout);
-    };
-  }, []);
+  /* ---------- действия для UI ---------- */
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        `${API_URL}/auth/token`,
-        new URLSearchParams({
-          username: email,
-          password: password,
-        }),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
+    const body = new URLSearchParams();
+    body.append('username', email);
+    body.append('password', password);
 
-      const { access_token, refresh_token } = response.data;
-      setTokens(access_token, refresh_token);
-      await fetchUser();
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await axios.post(`${API_URL}/auth/login`, body, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+
+    setTokens(data.access_token, data.refresh_token);
+    await fetchUser();
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (form: RegisterData) => {
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/auth/register`, data);
-      await login(data.email, data.password);
+      await axios.post(`${API_URL}/auth/register`, form);
+      await login(form.email, form.password);
     } finally {
       setLoading(false);
     }
@@ -118,25 +132,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    if (refreshTimeout) clearTimeout(refreshTimeout);
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
     setUser(null);
+    setToken(null);
   };
 
-  const value = {
+  /* ---------- инициализация ---------- */
+  useEffect(() => {
+    fetchUser().finally(() => setLoading(false));
+
+    // подчистка таймера при размонтировании
+    return () => {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
+  }, []);
+
+  /* ---------- значение контекста ---------- */
+  const value: AuthContextType = {
     user,
+    token,
     loading,
     login,
-    register,
     logout,
+    register,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+/* ====================================================================== */
+/*                               HOOK                                     */
+/* ====================================================================== */
+export const useAuth = (): AuthContextType => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 };

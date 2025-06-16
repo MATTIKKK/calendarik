@@ -14,6 +14,13 @@ class User(BaseModel):
     chat_personality = Column(String, default="assistant")
     is_active = Column(Boolean, default=True)
     
-    # Relationships
+     # 1-к-1: ссылка на единственный чат
+    main_chat = relationship(
+        "Chat",
+        uselist=False,          # «возвращай один объект, а не список»
+        back_populates="owner",
+        cascade="all, delete-orphan",
+    )
+
+    # остальные связи
     events = relationship("CalendarEvent", back_populates="owner")
-    chats = relationship("Chat", back_populates="owner", cascade="all, delete-orphan") 

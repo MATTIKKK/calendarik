@@ -6,4 +6,5 @@ export interface User {
   gender: string;
   is_active: boolean;
   chat_personality: string;
+  chat_id: number;
 }

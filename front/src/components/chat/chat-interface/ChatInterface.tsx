@@ -64,138 +64,106 @@ const quickMessages = [
 ];
 
 interface ChatInterfaceProps {
-  initialChatId?: number;
   onChatCreated?: (chat: Chat) => void;
 }
+interface ChatMessageDTO {
+  id: number;
+  content: string;
+  role: string;
+  created_at: string;
+}
 
-const updateUserPersonality = async (personalityId: string) => {
-  const token = localStorage.getItem('accessToken');
-  if (!token) return;
-
-  try {
-    await axios.put(
-      'http://localhost:8000/api/auth/me/personality',
-      { personality: personalityId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-  } catch (error) {
-    console.error('Failed to update personality:', error);
-  }
-};
-
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  initialChatId,
-  onChatCreated,
-}) => {
-  /* — state — */
+export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
+  const { token, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<number | undefined>(
-    initialChatId
-  );
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [personality, setPersonality] = useState<AssistantPersonality>(
-    personalities[0]
+    personalities.find((p) => p.id === user?.chat_personality) ?? personalities[0]
   );
+  const [chatId, setChatId] = useState<number | null>(user?.chat_id ?? null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
     null
   );
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-
-  /* — прокрутка вниз — */
-  useEffect(() => {
-    if (initialChatId) {
-      loadChat(initialChatId);
-    }
-  }, [initialChatId]);
+  const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!token || chatId === null) return;
+
+    (async () => {
+      console.log('chatId', chatId);
+      try {
+        const { data } = await axios.get<ChatMessageDTO[]>(
+          `http://localhost:8000/api/chat/${chatId}/messages`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setMessages(
+          data
+            .slice()
+            .reverse()
+            .map((m) => ({
+              id: m.id.toString(),
+              content: m.content,
+              sender: m.role === 'assistant' ? 'assistant' : 'user',
+              timestamp: new Date(m.created_at),
+            }))
+        );
+      } catch (err) {
+        console.error('Failed to load history', err);
+      }
+    })();
+  }, [chatId, token]);
+
+  /* -------- 2. автоскролл -------- */
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  /* — отправка текста — */
-  const loadChat = async (chatId: number) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8000/api/chat/${chatId}/messages`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        }
-      );
-
-      const formattedMessages = response.data.map((msg: any) => ({
-        id: msg.id.toString(),
-        content: msg.content,
-        sender: msg.role,
-        timestamp: new Date(msg.created_at),
-      }));
-
-      setMessages(formattedMessages);
-      setCurrentChatId(chatId);
-    } catch (error) {
-      console.error('Failed to load chat:', error);
-    }
-  };
-
+  /* -------- 3. отправка сообщения -------- */
   const send = async (text?: string) => {
-    const content = text ?? inputMessage;
-    if (!content.trim() || isTyping) return;
+    if (!token || isTyping) return;
+    const content = (text ?? inputMessage).trim();
+    if (!content) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
+    // оптимистично показываем
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        content,
+        sender: 'user',
+        timestamp: new Date(),
+      },
+    ]);
     setInputMessage('');
     setIsTyping(true);
 
     try {
-      const response = await axios.post(
-        'http://localhost:8000/api/ai/analyze',
+      const { data } = await axios.post(
+        'http://localhost:8000/api/chat/message',
         {
           message: content,
-          chat_id: currentChatId,
           personality: personality.id,
+          chat_id: chatId ?? undefined,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!currentChatId && response.data.chat_id) {
-        setCurrentChatId(response.data.chat_id);
-        if (onChatCreated) {
-          const chatResponse = await axios.get(
-            `http://localhost:8000/api/chat/${response.data.chat_id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-              },
-            }
-          );
-          onChatCreated(chatResponse.data);
-        }
-      }
+      // если это первое сообщение — запоминаем chatId
+      if (chatId === null) setChatId(data.chat_id);
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response.data.message,
-        sender: 'assistant',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Failed to send message:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          content: data.message,
+          sender: 'assistant',
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err) {
+      console.error('Failed to send message', err);
     } finally {
       setIsTyping(false);
     }
@@ -238,10 +206,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handlePersonalityChange = async (personalityId: string) => {
+    if (!token) return;
+
     const next = personalities.find((p) => p.id === personalityId)!;
     setPersonality(next);
-    await updateUserPersonality(personalityId);
+    try {
+      await axios.put(
+        'http://localhost:8000/api/auth/me/personality',
+        { personality: personalityId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error('Failed to update personality:', error);
+    }
   };
+
+  useEffect(() => {
+    if (!token) return;
+  
+    axios
+      .get<{ id: number }>('http://localhost:8000/api/chat/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(({ data }) => {
+        setChatId(data.id);
+        console.log('chatId in useEffect', data.id);
+      })
+      .catch(console.error);
+  }, [token]);
 
   /* — JSX — */
   return (
@@ -264,7 +256,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         <select
           className="pers-select"
-          value={user?.chat_personality}
+          value={personality.id}
           onChange={(e) => handlePersonalityChange(e.target.value)}
         >
           {personalities.map((p) => (
@@ -281,7 +273,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <MessageBubble key={m.id} message={m} />
         ))}
         {isTyping && <TypingIndicator />}
-        <div ref={messagesEndRef} />
+        <div ref={endRef} />
       </main>
 
       {/* быстрые ответы */}
@@ -300,7 +292,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             rows={2}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={keyPress}
+            onKeyDown={keyPress}
             placeholder="Tell me about your plans, tasks, or deadlines…"
             className="chat-textarea"
           />

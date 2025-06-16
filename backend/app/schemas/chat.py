@@ -42,6 +42,8 @@ class ChatList(BaseModel):
 
 class AIChatRequest(BaseModel):
     message: str
+    personality: Optional[str] = None
+    language: Optional[str] = None
     chat_id: Optional[int] = None  # None для нового чата
 
 class AIChatResponse(BaseModel):

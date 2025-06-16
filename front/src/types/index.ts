@@ -16,9 +16,8 @@ export interface User {
 export interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'assistant';
+  sender: 'assistant' | 'user';
   timestamp: Date;
-  type?: 'text' | 'task' | 'event';
 }
 
 export interface Event {
@@ -36,7 +35,7 @@ export interface AssistantPersonality {
   id: string;
   name: string;
   description: string;
-  tone: 'coach' | 'assistant' | 'friend' | 'girlfriend' | 'boyfriend';
+  tone: string;
   avatar: string;
 }
 
