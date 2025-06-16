@@ -11,7 +11,9 @@ class User(BaseModel):
     full_name = Column(String)
     timezone = Column(String, default="UTC")
     gender = Column(String, default="other")
+    chat_personality = Column(String, default="assistant")
     is_active = Column(Boolean, default=True)
     
     # Relationships
-    events = relationship("CalendarEvent", back_populates="owner") 
+    events = relationship("CalendarEvent", back_populates="owner")
+    chats = relationship("Chat", back_populates="owner", cascade="all, delete-orphan") 

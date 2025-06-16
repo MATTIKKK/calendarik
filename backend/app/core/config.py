@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     # === Frontend ===
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # === OpenAI ===
+    OPENAI_API_KEY: str
+    OPENAI_MODEL: str = "gpt-4-turbo-preview"
+    OPENAI_TEMPERATURE: float = 0.7
+    OPENAI_MAX_TOKENS: int = 500
+
     # === Email settings (for future use) ===
     SMTP_TLS: bool = True
     SMTP_PORT: Optional[int] = None

@@ -1,11 +1,20 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
+class RegisterData(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    timezone: str
+    gender: str
+    chat_personality: str = "assistant"
+
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
     gender: Optional[str] = None
     timezone: Optional[str] = None
+    chat_personality: Optional[str] = "assistant"
 
 class UserCreate(UserBase):
     password: str

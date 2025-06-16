@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, calendar
+from app.routes import auth, calendar, chat, ai
 from app.core.config import settings
 
 app = FastAPI(
@@ -11,7 +11,7 @@ app = FastAPI(
 
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173", 
+    "http://127.0.0.1:5173",  
 ]
 
 # Configure CORS
@@ -26,6 +26,8 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["calendar"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 
 @app.get("/api/health")
 async def health_check():
