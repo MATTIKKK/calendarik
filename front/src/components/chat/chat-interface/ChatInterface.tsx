@@ -7,98 +7,198 @@ import {
   AlertTriangle,
   Mic,
   MicOff,
-  ChevronDown,
 } from 'lucide-react';
 import { Message, AssistantPersonality } from '../../../types';
+import { Chat } from '../../../types/chat';
+// import { chatService } from '../../../services/chatService';
 import { MessageBubble } from '../message-bubble/MessageBubble';
 import { TypingIndicator } from '../typing-indicator/TypingIndicator';
 import './chat-interface.css';
+import axios from 'axios';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export const personalities: AssistantPersonality[] = [
-  { id: 'assistant',  name: 'Professional Assistant', description: 'Formal…',  tone: 'assistant',  avatar: '💼' },
-  { id: 'coach',      name: 'Motivational Coach',   description: 'Energetic…', tone: 'coach',      avatar: '💪' },
-  { id: 'friend',     name: 'Best Friend',          description: 'Casual…',    tone: 'friend',     avatar: '👥' },
-  { id: 'girlfriend', name: 'Caring Girlfriend',    description: 'Sweet…',     tone: 'girlfriend', avatar: '💕' },
-  { id: 'boyfriend',  name: 'Supportive Boyfriend', description: 'Protective…',tone: 'boyfriend',  avatar: '❤️' },
+  {
+    id: 'assistant',
+    name: 'Professional Assistant',
+    description: 'Formal…',
+    tone: 'assistant',
+    avatar: '💼',
+  },
+  {
+    id: 'coach',
+    name: 'Motivational Coach',
+    description: 'Energetic…',
+    tone: 'coach',
+    avatar: '💪',
+  },
+  {
+    id: 'friend',
+    name: 'Best Friend',
+    description: 'Casual…',
+    tone: 'friend',
+    avatar: '👥',
+  },
+  {
+    id: 'girlfriend',
+    name: 'Caring Girlfriend',
+    description: 'Sweet…',
+    tone: 'girlfriend',
+    avatar: '💕',
+  },
+  {
+    id: 'boyfriend',
+    name: 'Supportive Boyfriend',
+    description: 'Protective…',
+    tone: 'boyfriend',
+    avatar: '❤️',
+  },
 ];
 
 /* быстрые ответы */
 const quickMessages = [
   'Schedule a meeting',
-  'What’s my schedule today?',
+  "What's my schedule today?",
   'Find free time this week',
   'Cancel my 3pm appointment',
 ];
 
-export const ChatInterface: React.FC = () => {
+interface ChatInterfaceProps {
+  initialChatId?: number;
+  onChatCreated?: (chat: Chat) => void;
+}
+
+const updateUserPersonality = async (personalityId: string) => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
+
+  try {
+    await axios.put(
+      'http://localhost:8000/api/auth/me/personality',
+      { personality: personalityId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  } catch (error) {
+    console.error('Failed to update personality:', error);
+  }
+};
+
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+  initialChatId,
+  onChatCreated,
+}) => {
   /* — state — */
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content:
-        'Hi! I’m your AI assistant. Tell me about your plans, tasks, or deadlines, and I’ll help you organize them in your calendar. How can I help you today?',
-      sender: 'assistant',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<number | undefined>(
+    initialChatId
+  );
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false); 
-  const [personality, setPersonality] = useState<AssistantPersonality >(
-    { id:'assistant',  name:'Professional Assistant', description:'Formal…',  tone:'assistant',  avatar:'💼' },
+  const [personality, setPersonality] = useState<AssistantPersonality>(
+    personalities[0]
   );
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
     null
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   /* — прокрутка вниз — */
+  useEffect(() => {
+    if (initialChatId) {
+      loadChat(initialChatId);
+    }
+  }, [initialChatId]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
   /* — отправка текста — */
-  const send = (text?: string) => {
-    const content = text ?? inputMessage;
-    if (!content.trim()) return;
+  const loadChat = async (chatId: number) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/chat/${chatId}/messages`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        content,
-        sender: 'user',
-        timestamp: new Date(),
-      },
-    ]);
+      const formattedMessages = response.data.map((msg: any) => ({
+        id: msg.id.toString(),
+        content: msg.content,
+        sender: msg.role,
+        timestamp: new Date(msg.created_at),
+      }));
+
+      setMessages(formattedMessages);
+      setCurrentChatId(chatId);
+    } catch (error) {
+      console.error('Failed to load chat:', error);
+    }
+  };
+
+  const send = async (text?: string) => {
+    const content = text ?? inputMessage;
+    if (!content.trim() || isTyping) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
     setInputMessage('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
+    try {
+      const response = await axios.post(
+        'http://localhost:8000/api/ai/analyze',
         {
-          id: (Date.now() + 1).toString(),
-          content: generateAIResponse(content),
-          sender: 'assistant',
-          timestamp: new Date(),
+          message: content,
+          chat_id: currentChatId,
+          personality: personality.id,
         },
-      ]);
-      setIsTyping(false);
-    }, 1500);
-  };
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
 
-  /* — генерация «ответа» — */
-  const generateAIResponse = (txt: string) => {
-    const t = txt.toLowerCase();
-    if (/meeting|call/.test(t)) return 'I see you mentioned a meeting…';
-    if (/deadline|due/.test(t)) return 'I notice you have a deadline…';
-    if (/task|todo/.test(t)) return 'Great! I’ll help you schedule…';
-    if (/schedule today/.test(t)) return 'Here’s your schedule for today…';
-    if (/free time/.test(t)) return 'Looking at your calendar…';
-    if (/cancel.*3pm/.test(t)) return 'I’ve cancelled your 3 PM appointment…';
-    return 'Got it! Tell me timeframe, priority, and details so I can fit it in.';
+      if (!currentChatId && response.data.chat_id) {
+        setCurrentChatId(response.data.chat_id);
+        if (onChatCreated) {
+          const chatResponse = await axios.get(
+            `http://localhost:8000/api/chat/${response.data.chat_id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+              },
+            }
+          );
+          onChatCreated(chatResponse.data);
+        }
+      }
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response.data.message,
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   /* — горячая клавиша Enter — */
@@ -129,12 +229,18 @@ export const ChatInterface: React.FC = () => {
       alert('Unable to access microphone. Check permissions.');
     }
   };
-  
+
   const stopRec = () => {
     mediaRecorder?.stop();
     mediaRecorder?.stream.getTracks().forEach((t) => t.stop());
     setMediaRecorder(null);
     setIsRecording(false);
+  };
+
+  const handlePersonalityChange = async (personalityId: string) => {
+    const next = personalities.find((p) => p.id === personalityId)!;
+    setPersonality(next);
+    await updateUserPersonality(personalityId);
   };
 
   /* — JSX — */
@@ -156,18 +262,14 @@ export const ChatInterface: React.FC = () => {
           </div>
         </div>
 
-        {/* <select> вместо кастомного дропдауна */}
         <select
           className="pers-select"
-          value={personality.id}
-          onChange={(e) => {
-            const next = personalities.find(p => p.id === e.target.value)!;
-            setPersonality(next);
-          }}
+          value={user?.chat_personality}
+          onChange={(e) => handlePersonalityChange(e.target.value)}
         >
-          {personalities.map(p => (
+          {personalities.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.avatar}  {p.name}
+              {p.avatar} {p.name}
             </option>
           ))}
         </select>
@@ -212,7 +314,7 @@ export const ChatInterface: React.FC = () => {
 
         <button
           onClick={() => send()}
-          disabled={!inputMessage.trim()}
+          disabled={!inputMessage.trim() || isTyping}
           className="send-btn"
         >
           <Send size={20} />

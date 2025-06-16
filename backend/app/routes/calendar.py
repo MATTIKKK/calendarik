@@ -104,3 +104,4 @@ def delete_event(
     db.delete(db_event)
     db.commit()
     return None
+ 

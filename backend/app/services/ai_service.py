@@ -171,3 +171,4 @@ class AIService:
         except Exception as e:
             print(f"[AIService.detect_language] Error: {e}")
             return "English"
+ 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
-from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.routes.auth import get_current_user
@@ -15,8 +15,35 @@ from app.schemas.chat import (
     AIChatResponse,
     ChatMessageCreate
 )
+from app.services.chat_service import ChatService
 
 router = APIRouter()
+
+class ChatResponse(BaseModel):
+    id: int
+    title: str
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+class MessageResponse(BaseModel):
+    id: int
+    content: str
+    role: str
+    created_at: str
+    chat_id: int
+
+    class Config:
+        from_attributes = True
+
+class ChatListResponse(BaseModel):
+    chats: List[ChatResponse]
+    total: int
+
+class UpdateChatRequest(BaseModel):
+    title: str
 
 @router.post("/", response_model=ChatResponse)
 async def create_chat(
@@ -33,13 +60,17 @@ async def create_chat(
     db.refresh(db_chat)
     return db_chat
 
-@router.get("/", response_model=ChatList)
+@router.get("/", response_model=ChatListResponse)
 async def get_chats(
+    limit: int = 50,
+    offset: int = 0,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    chats = db.query(Chat).filter(Chat.owner_id == current_user.id).all()
-    return {"chats": chats}
+    chat_service = ChatService(db, current_user)
+    chats = chat_service.get_user_chats(limit, offset)
+    total = db.query(User).filter(User.owner_id == current_user.id).count()
+    return {"chats": chats, "total": total}
 
 @router.get("/{chat_id}", response_model=ChatResponse)
 async def get_chat(
@@ -111,29 +142,36 @@ async def send_message(
         "title": chat.title if request.chat_id is None else None
     }
 
-@router.put("/{chat_id}", response_model=ChatResponse)
-async def update_chat(
+@router.get("/{chat_id}/messages", response_model=List[MessageResponse])
+async def get_chat_messages(
     chat_id: int,
-    chat_update: ChatUpdate,
+    limit: int = 50,
+    before_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    chat = db.query(Chat).filter(
-        Chat.id == chat_id,
-        Chat.owner_id == current_user.id
-    ).first()
-    
+    chat_service = ChatService(db, current_user)
+    if not chat_service.get_chat(chat_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat not found"
+        )
+    return chat_service.get_chat_messages(chat_id, limit, before_id)
+
+@router.put("/{chat_id}", response_model=ChatResponse)
+async def update_chat(
+    chat_id: int,
+    request: UpdateChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_service = ChatService(db, current_user)
+    chat = chat_service.update_chat_title(chat_id, request.title)
     if not chat:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat not found"
         )
-    
-    for field, value in chat_update.dict(exclude_unset=True).items():
-        setattr(chat, field, value)
-    
-    db.commit()
-    db.refresh(chat)
     return chat
 
 @router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -142,17 +180,19 @@ async def delete_chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    chat = db.query(Chat).filter(
-        Chat.id == chat_id,
-        Chat.owner_id == current_user.id
-    ).first()
-    
-    if not chat:
+    chat_service = ChatService(db, current_user)
+    if not chat_service.delete_chat(chat_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat not found"
         )
-    
-    db.delete(chat)
-    db.commit()
-    return None 
+
+@router.get("/search", response_model=List[MessageResponse])
+async def search_messages(
+    query: str,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_service = ChatService(db, current_user)
+    return chat_service.search_messages(query, limit) 

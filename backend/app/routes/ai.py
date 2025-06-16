@@ -9,6 +9,7 @@ from app.routes.auth import get_current_user
 from app.models import User, Chat, ChatMessage, CalendarEvent
 from app.services.ai_service import AIService
 from app.services.calendar_service import CalendarService
+from app.services.chat_service import ChatService
 
 router = APIRouter()
 ai_service = AIService()
@@ -46,34 +47,34 @@ async def analyze_message(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        # Initialize services
+        chat_service = ChatService(db, current_user)
+        calendar_service = CalendarService(db, current_user)
+
+        # Use user's saved personality if none provided
         personality = request.personality or current_user.chat_personality
 
+        # Detect language if not specified
         language = request.language
         if not language:
             language = await ai_service.detect_language(request.message)
 
-        calendar_service = CalendarService(db, current_user)
-
+        # Get or create chat
         chat = None
         if request.chat_id:
-            chat = db.query(Chat).filter(
-                Chat.id == request.chat_id,
-                Chat.owner_id == current_user.id
-            ).first()
+            chat = chat_service.get_chat(request.chat_id)
             if not chat:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Chat not found"
                 )
         else:
-            chat = Chat(
-                title=request.message[:50] + "...",
-                owner_id=current_user.id
-            )
-            db.add(chat)
-            db.commit()
-            db.refresh(chat)
+            chat = chat_service.create_chat(request.message[:50] + "...")
 
+        # Save user message
+        chat_service.add_message(chat.id, request.message, "user")
+
+        # Analyze message with AI
         analysis = await ai_service.analyze_message(
             message=request.message,
             personality=personality,
@@ -82,27 +83,19 @@ async def analyze_message(
             calendar_service=calendar_service
         )
 
-        user_message = ChatMessage(
-            content=request.message,
-            role="user",
-            chat_id=chat.id
-        )
-        db.add(user_message)
+        # Save AI response
+        chat_service.add_message(chat.id, analysis["message"], "assistant")
 
-        ai_message = ChatMessage(
-            content=analysis["message"],
-            role="assistant",
-            chat_id=chat.id
-        )
-        db.add(ai_message)
-
+        # Create calendar event if detected
         calendar_event_id = None
         if analysis["calendar_data"] and analysis["should_create_event"]:
             try:
                 calendar_data = analysis["calendar_data"]
+                # Validate required fields
                 if not all(key in calendar_data for key in ["title", "startTime"]):
                     raise ValueError("Missing required calendar data fields")
 
+                # Parse dates
                 start_time = datetime.fromisoformat(calendar_data["startTime"].replace('Z', '+00:00'))
                 end_time = None
                 if "endTime" in calendar_data:
@@ -121,9 +114,8 @@ async def analyze_message(
                 calendar_event_id = event.id
             except (ValueError, KeyError) as e:
                 print(f"[AI Route] Calendar event creation error: {e}")
+                # Continue without creating event
                 pass
-
-        db.commit()
 
         return {
             "message": analysis["message"],

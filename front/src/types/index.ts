@@ -1,3 +1,9 @@
+export * from './user';
+export * from './auth';
+export * from './message';
+export * from './event';
+export * from './chat';
+
 export interface User {
   id: number;
   email: string;

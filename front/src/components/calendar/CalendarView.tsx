@@ -1,46 +1,70 @@
-import React, { useState } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Plus, Clock, AlertCircle, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Clock,
+  AlertCircle,
+  // X,
+} from 'lucide-react';
 import { Event } from '../../types';
 import { DayScheduleModal } from './DayScheduleModal';
-
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Team Meeting',
-    description: 'Weekly team sync',
-    startTime: new Date(2024, 0, 15, 10, 0),
-    endTime: new Date(2024, 0, 15, 11, 0),
-    priority: 'high',
-    type: 'meeting',
-    userId: '1',
-  },
-  {
-    id: '2',
-    title: 'Project Deadline',
-    description: 'Submit final report',
-    startTime: new Date(2024, 0, 16, 17, 0),
-    endTime: new Date(2024, 0, 16, 18, 0),
-    priority: 'high',
-    type: 'deadline',
-    userId: '1',
-  },
-  {
-    id: '3',
-    title: 'Lunch Break',
-    description: 'Team lunch at downtown restaurant',
-    startTime: new Date(2024, 0, 15, 12, 0),
-    endTime: new Date(2024, 0, 15, 13, 0),
-    priority: 'medium',
-    type: 'personal',
-    userId: '1',
-  },
-];
+import axios from 'axios';
 
 export const CalendarView: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events] = useState<Event[]>(mockEvents);
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayModal, setShowDayModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load events from backend
+  useEffect(() => {
+    loadEvents();
+  }, [currentDate]);
+
+  const loadEvents = async () => {
+    try {
+      setIsLoading(true);
+      const startDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const endDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+
+      const response = await axios.get(
+        `http://localhost:8000/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+
+      const formattedEvents = response.data.map((event: any) => ({
+        id: event.id.toString(),
+        title: event.title,
+        description: event.description,
+        startTime: new Date(event.start_time),
+        endTime: new Date(event.end_time),
+        priority: event.priority || 'medium',
+        type: event.type || 'meeting',
+        userId: event.owner_id.toString(),
+      }));
+
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error('Failed to load events:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -51,28 +75,28 @@ export const CalendarView: React.FC = () => {
     const startingDayOfWeek = firstDay.getDay();
 
     const days: (Date | null)[] = [];
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-    
+
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
-    
+
     return days;
   };
 
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => 
-      event.startTime.toDateString() === date.toDateString()
+    return events.filter(
+      (event) => event.startTime.toDateString() === date.toDateString()
     );
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       if (direction === 'prev') {
         newDate.setMonth(prev.getMonth() - 1);
@@ -85,10 +109,14 @@ export const CalendarView: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      case 'high':
+        return 'bg-red-500';
+      case 'medium':
+        return 'bg-yellow-500';
+      case 'low':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -99,8 +127,18 @@ export const CalendarView: React.FC = () => {
 
   const days = getDaysInMonth(currentDate);
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -117,10 +155,12 @@ export const CalendarView: React.FC = () => {
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900">
                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </h2>
-              <p className="text-gray-600 text-sm lg:text-base">Manage your schedule and deadlines</p>
+              <p className="text-gray-600 text-sm lg:text-base">
+                Manage your schedule and deadlines
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={() => navigateMonth('prev')}
@@ -143,8 +183,11 @@ export const CalendarView: React.FC = () => {
 
         {/* Day Names Header */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {dayNames.map(day => (
-            <div key={day} className="p-2 lg:p-3 text-center text-xs lg:text-sm font-semibold text-gray-500">
+          {dayNames.map((day) => (
+            <div
+              key={day}
+              className="p-2 lg:p-3 text-center text-xs lg:text-sm font-semibold text-gray-500"
+            >
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
@@ -169,20 +212,27 @@ export const CalendarView: React.FC = () => {
                   isToday ? 'bg-primary-50 border-primary-200' : ''
                 }`}
               >
-                <div className={`text-xs lg:text-sm font-semibold mb-1 ${
-                  isToday ? 'text-primary-600' : 'text-gray-900'
-                }`}>
+                <div
+                  className={`text-xs lg:text-sm font-semibold mb-1 ${
+                    isToday ? 'text-primary-600' : 'text-gray-900'
+                  }`}
+                >
                   {day.getDate()}
                 </div>
-                
+
                 <div className="space-y-1">
-                  {dayEvents.slice(0, 1).map(event => (
+                  {dayEvents.slice(0, 1).map((event) => (
                     <div
                       key={event.id}
                       className="text-xs px-1 lg:px-2 py-1 rounded bg-opacity-20 border-l-2 border-opacity-100"
                       style={{
-                        backgroundColor: getPriorityColor(event.priority).replace('bg-', '').replace('-500', '') + '20',
-                        borderLeftColor: getPriorityColor(event.priority).replace('bg-', '').replace('-500', '')
+                        backgroundColor:
+                          getPriorityColor(event.priority)
+                            .replace('bg-', '')
+                            .replace('-500', '') + '20',
+                        borderLeftColor: getPriorityColor(event.priority)
+                          .replace('bg-', '')
+                          .replace('-500', ''),
                       }}
                     >
                       <div className="flex items-center space-x-1">

@@ -1,8 +1,8 @@
 /* Переменные цвета (можно вынести в общий CSS, если уже есть) */
 :root {
-  --primary-50:  #eff6ff;
-  --secondary-50:#fdf2f8;
-  --purple-50:   #f5f3ff;
+  --primary-50:  #f0f7ff;
+  --green-50:#dfffeb;
+  --purple-50:   #ebf9ff;
 }
 
 /* Корневой контейнер страницы авторизации */
@@ -16,7 +16,6 @@
   background: linear-gradient(
     135deg,
     var(--primary-50) 0%,
-    var(--secondary-50) 50%,
     var(--purple-50) 100%
   );
   overflow: hidden;         /* прячем декоративный фон за краями */
