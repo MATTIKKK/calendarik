@@ -21,7 +21,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     email: '',
     password: '',
     full_name: '',
-    timezone: 'UTC',
+    timezone: 'Etc/GMT-5',
     gender: 'other',
   });
   const [confirmPassword, setConfirmPassword] = useState('');

@@ -1,0 +1,172 @@
+/* ---------- цвета и базовые переменные ---------- */
+:root {
+  --color-bg-gradient-start: #ecfeff;
+  --color-bg-gradient-middle: #eff6ff;
+  --color-bg-gradient-end: #e0e7ff;
+
+  --color-primary-light: #cffafe;
+  --color-primary: #06b6d4;
+  --color-primary-dark: #0e7490;
+
+  --color-secondary-light: #bfdbfe;
+  --color-secondary: #3b82f6;
+  --color-secondary-dark: #1e3a8a;
+
+  --color-accent-light: #ddd6fe;
+  --color-accent: #6366f1;
+  --color-accent-dark: #4338ca;
+
+  --color-bg: #ffffff;
+  --color-text: #1f2937;
+  --color-text-light: #6b7280;
+
+  --radius: 0.5rem;
+  --transition: 0.2s ease;
+
+  --error-bg: #fef2f2;
+  --error-text: #dc2626;
+  --bg-header: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+}
+
+/* ---------- общий лэйаут ---------- */
+.layout-root {
+  display: flex;
+  height: 100vh;
+  background: linear-gradient(135deg, var(--color-bg-gradient-start), var(--color-bg-gradient-end));
+}
+
+/* ---------- mobile menu button ---------- */
+.menu-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  padding: 0.2rem;
+  border: none;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (min-width: 1024px) {
+  .menu-btn { display: none; }
+}
+
+/* ---------- sidebar ---------- */
+.sidebar {
+  width: 16rem;
+  flex-shrink: 0;
+  background: var(--color-bg);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transform: translateX(-100%);
+  transition: transform var(--transition);
+  position: fixed;
+  z-index: 40;
+}
+.sidebar.open { transform: translateX(0); }
+@media (min-width: 1024px) {
+  .sidebar { position: relative; transform: none; }
+}
+
+/* overlay for mobile */
+.overlay { position: fixed; inset: 0; z-index: -1; }
+
+/* ---------- profile ---------- */
+.profile {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-secondary-light);
+  display: flex;
+  align-items: center;
+  column-gap: 1rem;
+}
+.avatar-lg {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--bg-header);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-info h3 { font-weight: 600; color: var(--color-text); }
+.profile-info p { font-size: 0.8rem; color: var(--color-text-light); }
+
+/* ---------- navigation ---------- */
+.nav { flex: 1; padding: 1rem; }
+.nav ul { display: flex; flex-direction: column; row-gap: 0.5rem; }
+.nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: none;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+.nav-btn:hover {
+  background: var(--color-bg-gradient-middle);
+  color: var(--color-text);
+}
+.nav-btn.active {
+  background: var(--bg-header);
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.badge {
+  margin-left: auto;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+}
+.nav-btn.active .badge { background: rgba(255, 255, 255, 0.25); }
+
+/* ---------- footer ---------- */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--color-secondary-light);
+  display: grid;
+  row-gap: 0.5rem;
+}
+.logout { color: #dc2626; }
+.logout:hover { background: #fee2e2; color: #b91c1c; }
+
+/* ---------- content ---------- */
+.content { flex: 1; overflow: auto; }
+
+/* ---------- settings card ---------- */
+.settings-card {
+  background: var(--color-bg);
+  border-radius: 1.25rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+.settings-card h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-text); }
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.settings-grid label { display: flex; flex-direction: column; row-gap: 0.5rem; font-size: 0.85rem; color: var(--color-text); }
+.settings-grid input { padding: 0.55rem 0.75rem; border: 1px solid var(--color-secondary-light); border-radius: 0.5rem; font-size: 0.9rem; background: var(--color-bg-gradient-start); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar, .nav-btn { transition: 0.3s; }
+}

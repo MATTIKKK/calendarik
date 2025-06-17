@@ -1,68 +1,78 @@
-/* Цвета-переменные: настроите под свой дизайн */
 :root {
-  --primary-50: #eff6ff;   /* светло-голубой */
-  --secondary-50: #fdf2f8; /* нежно-розовый  */
-  --purple-50: #f5f3ff;    /* сиреневый-50  */
+  /* Фоновой градиент (как в Hero) */
+  --color-bg-gradient-start: #ecfeff;  /* cyan-50 */
+  --color-bg-gradient-middle: #eff6ff; /* blue-50 */
+  --color-bg-gradient-end: #e0e7ff;    /* indigo-100 */
 
-  --primary-500: #3b82f6;  /* насыщенный голубой */
-  --secondary-500: #ec4899;/* розовый-500        */
+  /* Основная палитра (cyan → blue → indigo) */
+  --color-primary-light: #cffafe;   /* cyan-100 */
+  --color-primary:       #06b6d4;   /* cyan-500 */
+  --color-primary-dark:  #0e7490;   /* cyan-800 */
+
+  --color-secondary-light: #bfdbfe; /* blue-200 */
+  --color-secondary:       #3b82f6; /* blue-500 */
+  --color-secondary-dark:  #1e3a8a; /* blue-900 */
+
+  --color-accent-light: #ddd6fe;    /* indigo-200 */
+  --color-accent:       #6366f1;    /* indigo-500 */
+  --color-accent-dark:  #4338ca;    /* indigo-800 */
+
+  /* Базовые цвета */
+  --color-bg:       #ffffff;
+  --color-text:     #1f2937;
+  --color-text-light: #6b7280;
+
+  --radius:        0.5rem;
+  --transition:    0.2s ease;
 }
 
-/* Загрузка / сплэш-экран */
-.app-loading {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Пример применения фонового градиента глобально */
+body {
   background: linear-gradient(
     135deg,
-    var(--primary-50) 0%,
-    var(--secondary-50) 50%,
-    var(--purple-50) 100%
+    var(--color-bg-gradient-start) 0%,
+    var(--color-bg-gradient-middle) 50%,
+    var(--color-bg-gradient-end) 100%
   );
+  color: var(--color-text);
 }
 
-.loader-wrapper {
-  text-align: center;
-}
-
-.loader-outer {
-  width: 4rem;        /* 64 px */
-  height: 4rem;
-  border-radius: 50%;
+/* Кнопки и важные элементы */
+button,
+.submit-button {
   background: linear-gradient(
     90deg,
-    var(--primary-500),
-    var(--secondary-500)
+    var(--color-primary),
+    var(--color-secondary)
   );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  animation: pulse-gentle 1.8s ease-in-out infinite;
+  color: #fff;
 }
 
-.loader-inner {
-  width: 2rem;        /* 32 px */
-  height: 2rem;
-  border-radius: 50%;
-  background: #ffffff;
+/* Ховер-эффект для кнопок */
+button:hover:not(:disabled),
+.submit-button:hover:not(:disabled) {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
-.loading-text {
-  color: #4b5563;     /* нейтральный серый */
-  font-weight: 500;
-  font-family: system-ui, sans-serif;
+/* Заголовки страниц */
+.page-header {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light),
+    var(--color-secondary-light)
+  );
+  padding: 1.5rem;
+  border-radius: 0 0 var(--radius) var(--radius);
+  margin-bottom: 2rem;
 }
 
-/* Анимация мягкого пульса */
-@keyframes pulse-gentle {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 0.9;
-  }
+.page-header h1 {
+  color: var(--color-primary-dark);
+}
+
+/* Акцентные ссылки, иконки и навигация */
+.nav-link:hover {
+  background: var(--color-accent-light);
+  color: var(--color-accent-dark);
 }

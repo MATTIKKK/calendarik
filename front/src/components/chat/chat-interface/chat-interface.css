@@ -1,11 +1,30 @@
 :root {
-  --primary-500: #3b82f6;
-  --secondary-500: #ec4899;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-500: #6b7280;
-  --gray-700: #374151;
-  --bg-header: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+  --color-bg-gradient-start: #ecfeff;
+  --color-bg-gradient-middle: #eff6ff;
+  --color-bg-gradient-end: #e0e7ff;
+
+  --color-primary-light: #cffafe;
+  --color-primary: #06b6d4;
+  --color-primary-dark: #0e7490;
+
+  --color-secondary-light: #bfdbfe;
+  --color-secondary: #3b82f6;
+  --color-secondary-dark: #1e3a8a;
+
+  --color-accent-light: #ddd6fe;
+  --color-accent: #6366f1;
+  --color-accent-dark: #4338ca;
+
+  --color-bg: #ffffff;
+  --color-text: #1f2937;
+  --color-text-light: #6b7280;
+
+  --radius: 0.5rem;
+  --transition: 0.2s ease;
+
+  --error-bg: #fef2f2;
+  --error-text: #dc2626;
+  --bg-header: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
 }
 
 .chat-root {

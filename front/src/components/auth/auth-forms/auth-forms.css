@@ -1,17 +1,30 @@
 /* ---------- 1. Палитра и базовые переменные ---------- */
 :root {
-  --primary-50:  #eff6ff;
-  --secondary-50:#fdf2f8;
-  --purple-50:   #f5f3ff;
-  --primary-500: #3b82f6;
-  --secondary-500:#ec4899;
-  --gray-50:     #f9fafb;
-  --gray-100:    #f3f4f6;
-  --gray-300:    #d1d5db;
-  --gray-600:    #4b5563;
-  --gray-700:    #374151;
-  --error-bg:    #fef2f2;
-  --error-text:  #dc2626;
+  --color-bg-gradient-start: #ecfeff;  /* cyan-50 */
+  --color-bg-gradient-middle: #eff6ff; /* blue-50 */
+  --color-bg-gradient-end: #e0e7ff;    /* indigo-100 */
+
+  --color-primary-light: #cffafe;   /* cyan-100 */
+  --color-primary:       #06b6d4;   /* cyan-500 */
+  --color-primary-dark:  #0e7490;   /* cyan-800 */
+
+  --color-secondary-light: #bfdbfe; /* blue-200 */
+  --color-secondary:       #3b82f6; /* blue-500 */
+  --color-secondary-dark:  #1e3a8a; /* blue-900 */
+
+  --color-accent-light: #ddd6fe;    /* indigo-200 */
+  --color-accent:       #6366f1;    /* indigo-500 */
+  --color-accent-dark:  #4338ca;    /* indigo-800 */
+
+  --color-bg:       #ffffff;
+  --color-text:     #1f2937;
+  --color-text-light: #6b7280;
+
+  --radius:        0.5rem;
+  --transition:    0.2s ease;
+  
+  --error-bg:      #fef2f2;
+  --error-text:    #dc2626;
 }
 
 /* ---------- 2. Обёртка и карточка ---------- */
@@ -19,10 +32,11 @@
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
+  
 }
 
 .form-card {
-  background: #ffffff;
+  background: var(--color-bg);
   padding: 2rem;
   border-radius: 1.5rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
@@ -43,18 +57,18 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 1rem;
-  background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
 }
 
 .form-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--gray-700);
+  color: var(--color-text);
   margin-bottom: 0.25rem;
 }
 
 .form-subtitle {
-  color: var(--gray-600);
+  color: var(--color-text-light);
 }
 
 /* ---------- 4. Поля формы ---------- */
@@ -73,7 +87,7 @@
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--gray-700);
+  color: var(--color-text);
 }
 
 /* Группа с иконкой / кнопкой */
@@ -86,7 +100,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--gray-600);
+  color: var(--color-text-light);
 }
 
 .toggle-password-button {
@@ -98,7 +112,7 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: var(--gray-600);
+  color: var(--color-text-light);
 }
 
 .form-input,
@@ -106,22 +120,19 @@
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
-  border: 1px solid var(--gray-300);
-  border-radius: 0.5rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--color-secondary-light);
+  border-radius: var(--radius);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .form-input:focus,
 .form-select:focus {
   outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25);
 }
 
-/* дополнительные отступы, если слева иконка */
 .with-left-icon { padding-left: 2.75rem; }
-
-/* чтоб не залипала кнопка / правый отступ */
 .with-right-button { padding-right: 2.75rem; }
 
 /* ---------- 5. Двухколоночная сетка ---------- */
@@ -137,17 +148,22 @@
   padding: 0.75rem 1rem;
   font-weight: 600;
   border: none;
-  border-radius: 0.5rem;
-  background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
   color: #fff;
   cursor: pointer;
-  transition: transform 0.2s, filter 0.2s;
+  transition: transform var(--transition), filter var(--transition);
 }
 
-.submit-button:hover:not(:disabled) { filter: brightness(0.95); transform: scale(1.05); }
-.submit-button:disabled          { opacity: 0.6; cursor: default; }
+.submit-button:hover:not(:disabled) {
+  filter: brightness(0.95);
+  transform: scale(1.05);
+}
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
-/* спиннер */
 .spinner {
   display: inline-block;
   width: 1rem;
@@ -167,7 +183,7 @@
   color: var(--error-text);
   text-align: center;
   padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
   font-size: 0.875rem;
 }
 
@@ -175,7 +191,7 @@
 .form-footer {
   margin-top: 1.5rem;
   text-align: center;
-  color: var(--gray-600);
+  color: var(--color-text-light);
   font-size: 0.9rem;
 }
 
@@ -184,10 +200,10 @@
   border: none;
   padding: 0;
   margin-left: 0.25rem;
-  color: var(--primary-500);
+  color: var(--color-primary);
   font-weight: 600;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--transition);
 }
 
-.link-button:hover { color: var(--secondary-500); }
+.link-button:hover { color: var(--color-secondary); }

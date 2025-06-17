@@ -49,7 +49,7 @@ export const CalendarView: React.FC = () => {
         }
       );
 
-      console.log("calendar events", response)
+      console.log('calendar events', response);
 
       const formattedEvents = response.data.map((event: any) => ({
         id: event.id.toString(),
@@ -152,7 +152,7 @@ export const CalendarView: React.FC = () => {
         {/* Calendar Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] rounded-full flex items-center justify-center">
               <Calendar className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -168,7 +168,7 @@ export const CalendarView: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => navigateMonth('prev')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-[var(--color-primary-light)] rounded-lg transition-colors duration-200"
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
@@ -178,7 +178,8 @@ export const CalendarView: React.FC = () => {
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="ml-4 px-3 lg:px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-lg hover:from-primary-600 hover:to-secondary-600 transition-all duration-200 flex items-center space-x-2">
+            <button className="ml-4 px-3 lg:px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center space-x-2"
+            >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Event</span>
             </button>
@@ -214,8 +215,8 @@ export const CalendarView: React.FC = () => {
               <div
                 key={index}
                 onClick={() => handleDayClick(day)}
-                className={`p-1 lg:p-2 h-16 lg:h-24 border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors duration-200 ${
-                  isToday ? 'bg-primary-50 border-primary-200' : ''
+                className={`p-1 lg:p-2 h-16 lg:h-24 border border-gray-200 cursor-pointer hover:bg-[var(--color-primary-light)] transition-colors duration-200 ${
+                  isToday ? 'bg-[var(--color-secondary-light)] border-[var(--color-secondary)]' : ''
                 }`}
               >
                 <div

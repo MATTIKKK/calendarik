@@ -1,3 +1,4 @@
+// App.tsx
 import React from 'react';
 import {
   BrowserRouter as Router,
@@ -5,43 +6,36 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
-import { MainLayout } from './components/layout/MainLayout';
-import './app.css'; // подключаем общие стили
+import { MainLayout } from './pages/layout/MainLayout';
+import LandingPage from './pages/landing-page/LandingPage';
 
-// Компонент для защищенных роутов
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth();
   const token = localStorage.getItem('accessToken');
-
-  if (!token || !user) {
-    // Если нет токена или пользователя, редиректим на страницу логина
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
+  return token ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// Компонент для публичных роутов (доступных только неавторизованным)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
   const token = localStorage.getItem('accessToken');
-
-  if (token && user) {
-    // Если пользователь авторизован, редиректим на главную
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
+  // если залогинены, сразу в /app
+  return token ? <Navigate to="/app" replace /> : <>{children}</>;
 };
 
-const AppContent: React.FC = () => {
-  return (
+const App: React.FC = () => (
+  <>
     <Routes>
-      {/* Публичные роуты */}
+      {/* Лендинг — только для неавторизованных */}
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <LandingPage />
+          </PublicRoute>
+        }
+      />
       <Route
         path="/login"
         element={
@@ -51,27 +45,20 @@ const AppContent: React.FC = () => {
         }
       />
 
-      {/* Защищенные роуты */}
+      {/* Всё, что под /app, защищено */}
       <Route
-        path="/*"
+        path="/app/*"
         element={
           <ProtectedRoute>
             <MainLayout />
           </ProtectedRoute>
         }
       />
-    </Routes>
-  );
-};
 
-const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
-  );
-};
+      {/* Фолбэк: всё остальное → на корень */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </>
+);
 
 export default App;
