@@ -10,16 +10,16 @@ from app.schemas.calendar import CalendarEventCreate, CalendarEventUpdate, Calen
 
 router = APIRouter()
 
-@router.post("/events", response_model=CalendarEventResponse)
+@router.post("/events", response_model=CalendarEventResponse, status_code=status.HTTP_201_CREATED)
 def create_event(
     event: CalendarEventCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    db_event = CalendarEvent(
-        **event.dict(),
-        owner_id=current_user.id
-    )
+    if event.end_time and event.end_time <= event.start_time:
+        raise HTTPException(status_code=400, detail="end_time must be after start_time")
+
+    db_event = CalendarEvent(**event.dict(), owner_id=current_user.id)
     db.add(db_event)
     db.commit()
     db.refresh(db_event)

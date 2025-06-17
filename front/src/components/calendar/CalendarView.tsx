@@ -11,6 +11,7 @@ import {
 import { Event } from '../../types';
 import { DayScheduleModal } from './DayScheduleModal';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const CalendarView: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -18,6 +19,7 @@ export const CalendarView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayModal, setShowDayModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { token } = useAuth();
 
   // Load events from backend
   useEffect(() => {
@@ -42,10 +44,12 @@ export const CalendarView: React.FC = () => {
         `http://localhost:8000/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
+
+      console.log("calendar events", response)
 
       const formattedEvents = response.data.map((event: any) => ({
         id: event.id.toString(),
@@ -202,6 +206,8 @@ export const CalendarView: React.FC = () => {
             }
 
             const dayEvents = getEventsForDate(day);
+            const dayTasks = dayEvents.filter((e) => e.type === 'task');
+            const dayBig = dayEvents.filter((e) => e.type !== 'task');
             const isToday = day.toDateString() === new Date().toDateString();
 
             return (
@@ -221,7 +227,7 @@ export const CalendarView: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  {dayEvents.slice(0, 1).map((event) => (
+                  {dayBig.slice(0, 1).map((event) => (
                     <div
                       key={event.id}
                       className="text-xs px-1 lg:px-2 py-1 rounded bg-opacity-20 border-l-2 border-opacity-100"
@@ -245,12 +251,32 @@ export const CalendarView: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                  {dayEvents.length > 1 && (
+                  {dayBig.length > 1 && (
                     <div className="text-xs text-gray-500 px-1 lg:px-2">
-                      +{dayEvents.length - 1} more
+                      +{dayBig.length - 1} more
                     </div>
                   )}
                 </div>
+
+                {/*  маленькие точки-задачи  */}
+                {dayTasks.length > 0 && (
+                  <div className="flex flex-wrap gap-0.5 mt-0.5">
+                    {dayTasks.slice(0, 6).map((task) => (
+                      <span
+                        key={task.id}
+                        className={`inline-block w-1.5 h-1.5 rounded-full ${getPriorityColor(
+                          task.priority
+                        )}`}
+                        title={task.title}
+                      />
+                    ))}
+                    {dayTasks.length > 6 && (
+                      <span className="text-[9px] text-gray-400 ml-0.5">
+                        +{dayTasks.length - 6}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

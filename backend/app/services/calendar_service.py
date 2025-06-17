@@ -1,112 +1,218 @@
-from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, not_
+from __future__ import annotations
+
+from datetime import datetime, timedelta, time
 from typing import List, Optional
+
+from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_
+
+from uuid import uuid4 
+from dateutil.parser import isoparse
+
 from app.models import CalendarEvent, User
+from datetime import timezone  
+from sqlalchemy.exc import SQLAlchemyError 
+
 
 class CalendarService:
-    def __init__(self, db: Session, user: User):
+    """
+    High-level API вокруг таблицы CalendarEvent для одного пользователя.
+    Все методы работают в UTC (или в той TZ, в которой хранятся даты в БД).
+    """
+
+    # ———————————————————————————————— init ————————————————————————————————
+    def __init__(self, db: Session, user: User) -> None:
         self.db = db
         self.user = user
 
-    def get_events_for_day(self, date: datetime) -> List[CalendarEvent]:
-        """Get all events for a specific day."""
-        start = date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = start + timedelta(days=1)
-        
-        return self.db.query(CalendarEvent).filter(
-            CalendarEvent.owner_id == self.user.id,
-            CalendarEvent.start_time >= start,
-            CalendarEvent.start_time < end
-        ).order_by(CalendarEvent.start_time).all()
-
-    def get_events_for_week(self, start_date: datetime) -> List[CalendarEvent]:
-        """Get all events for a week starting from start_date."""
-        start = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = start + timedelta(days=7)
-        
-        return self.db.query(CalendarEvent).filter(
-            CalendarEvent.owner_id == self.user.id,
-            CalendarEvent.start_time >= start,
-            CalendarEvent.start_time < end
-        ).order_by(CalendarEvent.start_time).all()
-
-    def find_free_slots(self, start_date: datetime, days: int = 7, 
-                       min_duration: int = 30) -> List[dict]:
-        """Find free time slots in the calendar.
-        
-        Args:
-            start_date: Starting date to look from
-            days: Number of days to look ahead
-            min_duration: Minimum duration in minutes
+    # —————————————————————— internal helpers ————————————————————————
+    def _window_query(self, start: datetime, end: datetime):
         """
-        start = start_date.replace(hour=9, minute=0, second=0, microsecond=0)  # Start at 9 AM
-        end = start + timedelta(days=days)
+        Возвращает SQL-фильтр «событие перекрывает [start, end)».
         
-        # Get all events in the range
-        events = self.db.query(CalendarEvent).filter(
+        Учтены случаи, когда end_time == None (all-day / open-ended).
+        """
+        return (
             CalendarEvent.owner_id == self.user.id,
-            CalendarEvent.start_time >= start,
-            CalendarEvent.start_time < end
-        ).order_by(CalendarEvent.start_time).all()
+            # событие начинается до конца окна  И  (заканчивается после начала окна ИЛИ end_time=None)
+            CalendarEvent.start_time < end,
+            or_(CalendarEvent.end_time.is_(None), CalendarEvent.end_time > start),
+        )
 
-        free_slots = []
-        current_time = start
+    # ——————————————————— чтение расписания ————————————————————————
+    def get_events_for_day(self, date: datetime) -> List[CalendarEvent]:
+        start = datetime.combine(date.date(), time.min)
+        end = start + timedelta(days=1)
 
-        for event in events:
-            # If there's enough time before the event
-            if (event.start_time - current_time).total_seconds() / 60 >= min_duration:
-                free_slots.append({
-                    "start": current_time,
-                    "end": event.start_time,
-                    "duration_minutes": int((event.start_time - current_time).total_seconds() / 60)
-                })
-            current_time = event.end_time or (event.start_time + timedelta(hours=1))
+        return (
+            self.db.query(CalendarEvent)
+            .filter(and_(*self._window_query(start, end)))
+            .order_by(CalendarEvent.start_time)
+            .all()
+        )
 
-        # Add final slot if there's time left
-        if (end - current_time).total_seconds() / 60 >= min_duration:
-            free_slots.append({
-                "start": current_time,
-                "end": end,
-                "duration_minutes": int((end - current_time).total_seconds() / 60)
-            })
+    def get_events_for_week(self, date: datetime) -> List[CalendarEvent]:
+        """ISO-неделя, начало — понедельник."""
+        start = datetime.combine((date - timedelta(days=date.weekday())).date(), time.min)
+        end = start + timedelta(days=7)
 
-        return free_slots
+        return (
+            self.db.query(CalendarEvent)
+            .filter(and_(*self._window_query(start, end)))
+            .order_by(CalendarEvent.start_time)
+            .all()
+        )
 
-    def format_events_for_ai(self, events: List[CalendarEvent]) -> str:
-        """Format events in a human-readable way for AI responses."""
-        if not events:
-            return "No events found."
+    # ——————————————————— свободные интервалы ————————————————————————
+    def find_free_slots(
+        self,
+        date_from: datetime,
+        days: int = 7,
+        min_minutes: int = 30,
+        workday_start: time = time(9, 0),
+        workday_end: time = time(18, 0),
+    ) -> List[dict]:
+        """
+        Возвращает список свободных слотов в рабочие часы.
 
-        result = []
-        for event in events:
-            time_str = event.start_time.strftime("%I:%M %p")
-            if event.end_time:
-                time_str += f" - {event.end_time.strftime('%I:%M %p')}"
-            
-            desc = f"• {time_str}: {event.title}"
-            if event.description:
-                desc += f" ({event.description})"
-            result.append(desc)
+        • Перекрывающиеся события “склеиваются”.  
+        • Если у события нет end_time → считаем его 1-часовым.  
+        • Возвращаются интервалы >= min_minutes.
+        """
+        window_start = datetime.combine(date_from.date(), workday_start)
+        window_end = window_start + timedelta(days=days)
 
-        return "\n".join(result)
+        events = (
+            self.db.query(CalendarEvent)
+            .filter(and_(*self._window_query(window_start, window_end)))
+            .order_by(CalendarEvent.start_time)
+            .all()
+        )
 
-    def format_free_slots_for_ai(self, slots: List[dict]) -> str:
-        """Format free time slots in a human-readable way for AI responses."""
-        if not slots:
-            return "No free time slots found."
-
-        result = []
-        for slot in slots:
-            start_str = slot["start"].strftime("%A, %B %d at %I:%M %p")
-            end_str = slot["end"].strftime("%I:%M %p")
-            duration_hours = slot["duration_minutes"] / 60
-            
-            if duration_hours >= 1:
-                duration = f"{duration_hours:.1f} hours"
+        # превратим в непересекающиеся отрезки
+        merged: List[tuple[datetime, datetime]] = []
+        for ev in events:
+            ev_start = max(ev.start_time, window_start)
+            ev_end = (
+                ev.end_time
+                if ev.end_time is not None
+                else ev_start + timedelta(hours=1)
+            )
+            if not merged or ev_start > merged[-1][1]:
+                merged.append((ev_start, ev_end))
             else:
-                duration = f"{slot['duration_minutes']} minutes"
-                
-            result.append(f"• {start_str} - {end_str} ({duration} available)")
+                # расширяем последний отрезок
+                merged[-1] = (merged[-1][0], max(merged[-1][1], ev_end))
 
-        return "\n".join(result) 
+        free: List[dict] = []
+        cursor = window_start
+
+        for busy_start, busy_end in merged:
+            if cursor < busy_start:
+                gap = (busy_start - cursor).total_seconds() / 60
+                if gap >= min_minutes:
+                    free.append(
+                        {
+                            "start": cursor,
+                            "end": busy_start,
+                            "duration_minutes": int(gap),
+                        }
+                    )
+            cursor = max(cursor, busy_end)
+
+            # если перешагнули окончание рабочего дня — переносим курсор на утро
+            if cursor.time() >= workday_end:
+                next_day = cursor.date() + timedelta(days=1)
+                cursor = datetime.combine(next_day, workday_start)
+
+        # последний слот до конца окна
+        if cursor < window_end:
+            gap = (window_end - cursor).total_seconds() / 60
+            if gap >= min_minutes:
+                free.append(
+                    {
+                        "start": cursor,
+                        "end": window_end,
+                        "duration_minutes": int(gap),
+                    }
+                )
+
+        return free
+
+    # ——————————————————— форматирование для LLM ———————————————————————
+    @staticmethod
+    def format_events_for_ai(events: List[CalendarEvent]) -> str:
+        if not events:
+            return "— нет событий —"
+
+        lines = []
+        for ev in events:
+            s = ev.start_time.strftime("%H:%M")
+            e = ev.end_time.strftime("%H:%M") if ev.end_time else ""
+            time_block = f"{s}-{e}" if e else s
+            desc = f"• {time_block}  {ev.title}"
+            if ev.description:
+                desc += f" ({ev.description})"
+            lines.append(desc)
+        return "\n".join(lines)
+
+    @staticmethod
+    def format_free_slots_for_ai(slots: List[dict]) -> str:
+        if not slots:
+            return "Свободных окон нет."
+
+        out = []
+        for slot in slots:
+            start = slot["start"].strftime("%a %d %b %H:%M")
+            end = slot["end"].strftime("%H:%M")
+            mins = slot["duration_minutes"]
+            dur = f"{mins // 60} ч {mins % 60} м" if mins >= 60 else f"{mins} мин"
+            out.append(f"• {start} – {end}  ({dur})")
+        return "\n".join(out)
+    
+    def create_event(self, data: Mapping[str, str]) -> CalendarEvent:
+        """
+        Сохраняет событие, присланное ИИ, и возвращает его.
+        `data` должен содержать как минимум поля 'title' и 'start'.
+        Формат даты — ISO-8601, без или с смещением.  Сохраняем в UTC.
+        """
+        # ── базовая валидация ─────────────────────────────────────────
+        title = data.get("title")
+        start_raw = data.get("start")
+        if not title or not start_raw:
+            raise ValueError("Both 'title' and 'start' fields are required.")
+
+        # ── парсинг + нормализация TZ ────────────────────────────────
+        start = isoparse(start_raw)
+        start = start.astimezone(timezone.utc) if start.tzinfo else start.replace(tzinfo=timezone.utc)
+
+        end: datetime | None = None
+        if data.get("end"):
+            end = isoparse(data["end"])
+            end = end.astimezone(timezone.utc) if end.tzinfo else end.replace(tzinfo=timezone.utc)
+
+        # ── (опционально) проверка на пересечение ────────────────────
+        # if self.db.query(CalendarEvent).filter(
+        #         and_(*self._window_query(start, end or start))
+        # ).first():
+        #     raise ValueError("Time slot already occupied.")
+
+        # ── создание объекта ─────────────────────────────────────────
+        ev = CalendarEvent(
+            owner_id=self.user.id,
+            title=title,
+            start_time=start,
+            end_time=end,
+            description=data.get("description"),
+        )
+
+        # ── сохранение ───────────────────────────────────────────────
+        try:
+            self.db.add(ev)
+            self.db.flush()          # commit оставляем роутеру / UoW
+            self.db.refresh(ev)
+            return ev
+        except (SQLAlchemyError, Exception):
+            self.db.rollback()
+            raise
+

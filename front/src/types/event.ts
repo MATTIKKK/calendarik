@@ -3,8 +3,8 @@ export interface Event {
   title: string;
   description?: string;
   startTime: Date;
-  endTime: Date;
-  priority: 'low' | 'medium' | 'high';
-  type: 'task' | 'meeting' | 'deadline' | 'personal';
+  endTime?: Date;          // для задач может быть null
+  priority: 'high' | 'medium' | 'low';
+  type: 'meeting' | 'deadline' | 'task';   // ← добавили task
   userId: string;
 }

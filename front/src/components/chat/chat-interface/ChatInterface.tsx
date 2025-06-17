@@ -245,7 +245,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
             <Bot size={24} />
           </div>
           <div>
-            <h3 className="chat-title">Bro</h3>
+            <h3 className="chat-title">Calendarik</h3>
             {/* <p className="chat-subtitle">
               {personality
                 ? personality.name

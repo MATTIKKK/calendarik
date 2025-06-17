@@ -47,11 +47,12 @@ async def send_message(
         message=req.message,
         personality=req.personality or current_user.chat_personality,
         user_gender=current_user.gender,
-        language=req.language or "English",
+        language=req.language or "Russian",
         calendar_service=CalendarService(db, current_user),
     )
-
+    
     # сохраняем ответ ассистента
+    print("ai_reply", ai_reply)
     assistant_msg = ChatMessage(
         content=ai_reply["message"], role="assistant", chat_id=chat.id
     )
