@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, time
-from typing import List, Optional
+from datetime import datetime, timedelta, time, timezone
+from typing import List, Optional, Mapping
+from zoneinfo import ZoneInfo    
 
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
@@ -10,7 +11,6 @@ from uuid import uuid4
 from dateutil.parser import isoparse
 
 from app.models import CalendarEvent, User
-from datetime import timezone  
 from sqlalchemy.exc import SQLAlchemyError 
 
 
@@ -41,8 +41,9 @@ class CalendarService:
 
     # ——————————————————— чтение расписания ————————————————————————
     def get_events_for_day(self, date: datetime) -> List[CalendarEvent]:
-        start = datetime.combine(date.date(), time.min)
-        end = start + timedelta(days=1)
+        # 00:00 UTC той же даты
+        start = datetime.combine(date.date(), time.min, tzinfo=timezone.utc)
+        end   = start + timedelta(days=1)
 
         return (
             self.db.query(CalendarEvent)
@@ -52,9 +53,9 @@ class CalendarService:
         )
 
     def get_events_for_week(self, date: datetime) -> List[CalendarEvent]:
-        """ISO-неделя, начало — понедельник."""
-        start = datetime.combine((date - timedelta(days=date.weekday())).date(), time.min)
-        end = start + timedelta(days=7)
+        monday = (date - timedelta(days=date.weekday())).date()
+        start  = datetime.combine(monday, time.min, tzinfo=timezone.utc)
+        end    = start + timedelta(days=7)
 
         return (
             self.db.query(CalendarEvent)
@@ -177,19 +178,31 @@ class CalendarService:
         Формат даты — ISO-8601, без или с смещением.  Сохраняем в UTC.
         """
         # ── базовая валидация ─────────────────────────────────────────
+        
+        print("[TZ]", self.user.timezone)    
+
         title = data.get("title")
         start_raw = data.get("start")
         if not title or not start_raw:
             raise ValueError("Both 'title' and 'start' fields are required.")
 
-        # ── парсинг + нормализация TZ ────────────────────────────────
-        start = isoparse(start_raw)
-        start = start.astimezone(timezone.utc) if start.tzinfo else start.replace(tzinfo=timezone.utc)
+        def _as_utc(dt_str: str) -> datetime:
+            """
+            Преобразует ISO-строку в datetime UTC.
+            • Если в строке есть смещение (+05:00, Z и т.п.) – просто переводим в UTC.
+            • Если смещения нет – считаем, что это время в поясе пользователя
+            (self.user.timezone), после чего переводим в UTC.
+            """
+            dt = isoparse(dt_str)
+            if dt.tzinfo is None:                          # naive
+                dt = dt.replace(tzinfo=ZoneInfo(self.user.timezone))
+                return dt.astimezone(timezone.utc)
 
-        end: datetime | None = None
-        if data.get("end"):
-            end = isoparse(data["end"])
-            end = end.astimezone(timezone.utc) if end.tzinfo else end.replace(tzinfo=timezone.utc)
+        start = _as_utc(start_raw)
+        end: datetime | None = _as_utc(data["end"]) if data.get("end") else None
+
+        if end and end <= start:
+            raise ValueError("end must be after start")
 
         # ── (опционально) проверка на пересечение ────────────────────
         # if self.db.query(CalendarEvent).filter(
