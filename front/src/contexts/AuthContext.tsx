@@ -13,6 +13,7 @@ import { RegisterData } from '../types/auth';
 /* ---------- тип контекста ---------- */
 export type AuthContextType = {
   user: User | null;
+  setUser: (user: User | null) => void;
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -151,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   /* ---------- значение контекста ---------- */
   const value: AuthContextType = {
     user,
+    setUser,   
     token,
     loading,
     login,

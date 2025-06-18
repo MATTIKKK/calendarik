@@ -74,13 +74,14 @@ interface ChatMessageDTO {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
-  const { token, user } = useAuth();
+  const { token, user, setUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [personality, setPersonality] = useState<AssistantPersonality>(
-    personalities.find((p) => p.id === user?.chat_personality) ?? personalities[0]
+    personalities.find((p) => p.id === user?.chat_personality) ??
+      personalities[0]
   );
   const [chatId, setChatId] = useState<number | null>(user?.chat_id ?? null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
@@ -216,14 +217,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
         { personality: personalityId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      setUser({ ...user!, chat_personality: personalityId });
     } catch (error) {
       console.error('Failed to update personality:', error);
     }
   };
 
   useEffect(() => {
+    if (user?.chat_personality) {
+      const p = personalities.find((p) => p.id === user.chat_personality);
+      if (p) setPersonality(p);
+    }
+  }, [user?.chat_personality]);
+
+  useEffect(() => {
     if (!token) return;
-  
+
     axios
       .get<{ id: number }>('/api/chat/me', {
         headers: { Authorization: `Bearer ${token}` },
