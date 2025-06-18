@@ -255,7 +255,8 @@
 
   /* сдвигаем область сообщений под header и над footer */
   .chat-messages {
-    margin-top: 3rem;
+    margin-top: 4rem;
+    height: fit-content;
   }
 
   .chat-title {
