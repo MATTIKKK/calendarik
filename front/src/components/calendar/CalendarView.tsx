@@ -41,7 +41,7 @@ export const CalendarView: React.FC = () => {
       );
 
       const response = await axios.get(
-        `http://localhost:8000/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
+        `http://128.251.224.196:8000/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

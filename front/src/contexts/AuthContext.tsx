@@ -23,7 +23,7 @@ export type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /* ---------- базовый URL лучше тянуть из env ---------- */
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://http://128.251.224.196:8000/api';
 
 /* ====================================================================== */
 /*                              PROVIDER                                   */
