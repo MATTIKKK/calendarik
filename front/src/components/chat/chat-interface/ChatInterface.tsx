@@ -17,6 +17,8 @@ import './chat-interface.css';
 import axios from 'axios';
 import { useAuth } from '../../../contexts/AuthContext';
 
+const WELCOME_TEXT = 'Привет! Я ваш личный помощник-планировщик. Чем могу помочь?';
+
 export const personalities: AssistantPersonality[] = [
   {
     id: 'assistant',
@@ -93,23 +95,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     if (!token || chatId === null) return;
 
     (async () => {
-      console.log('chatId', chatId);
       try {
         const { data } = await axios.get<ChatMessageDTO[]>(
           `/api/chat/${chatId}/messages`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setMessages(
-          data
-            .slice()
-            .reverse()
-            .map((m) => ({
-              id: m.id.toString(),
-              content: m.content,
-              sender: m.role === 'assistant' ? 'assistant' : 'user',
-              timestamp: new Date(m.created_at),
-            }))
-        );
+        let msgs: Message[] = data
+          .slice()
+          .reverse()
+          .map((m) => ({
+            id: m.id.toString(),
+            content: m.content,
+            sender: m.role === 'assistant' ? 'assistant' : 'user',
+            timestamp: new Date(m.created_at),
+          }));
+
+        if (msgs.length === 0) {
+          msgs = [
+            {
+              id: 'welcome',
+              content: WELCOME_TEXT,
+              sender: 'assistant',
+              timestamp: new Date(),
+            },
+          ];
+        }
+
+        setMessages(msgs);
       } catch (err) {
         console.error('Failed to load history', err);
       }
