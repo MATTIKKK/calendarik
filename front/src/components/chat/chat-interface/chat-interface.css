@@ -272,7 +272,7 @@
   }
   .chat-quick {
     position: fixed;
-    bottom: 50px;
+    bottom: 120px;
     left: 0;
     width: 100%;
     gap: 0.35rem;
