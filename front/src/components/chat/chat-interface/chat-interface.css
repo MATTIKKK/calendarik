@@ -271,8 +271,11 @@
     background-position: right 0.45rem center;
   }
   .chat-quick {
+    position: fixed;
+    bottom: 150px;
+    left: 0;
+    width: 100%;
     gap: 0.35rem;
-    padding-bottom: 5rem;
   }
   .quick-btn {
     padding: 0.18rem 0.6rem;
