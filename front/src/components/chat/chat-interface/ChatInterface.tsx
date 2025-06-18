@@ -95,7 +95,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
       console.log('chatId', chatId);
       try {
         const { data } = await axios.get<ChatMessageDTO[]>(
-          `http://128.251.224.196:8000/api/chat/${chatId}/messages`,
+          `/api/chat/${chatId}/messages`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMessages(
@@ -141,7 +141,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
 
     try {
       const { data } = await axios.post(
-        'http://128.251.224.196:8000/api/chat/message',
+        '/api/chat/message',
         {
           message: content,
           personality: personality.id,
@@ -212,7 +212,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     setPersonality(next);
     try {
       await axios.put(
-        'http://128.251.224.196:8000/api/auth/me/personality',
+        '/api/auth/me/personality',
         { personality: personalityId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -225,7 +225,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     if (!token) return;
   
     axios
-      .get<{ id: number }>('http://128.251.224.196:8000/api/chat/me', {
+      .get<{ id: number }>('/api/chat/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(({ data }) => {

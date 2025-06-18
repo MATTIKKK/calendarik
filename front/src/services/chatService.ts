@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { Chat, SendMessageRequest, SendMessageResponse } from '../types/chat';
 
-const API_URL = 'http://128.251.224.196:8000/api';
+// const API_URL = 'http://128.251.224.196:8000/api';
 
 export const chatService = {
   async getChats(): Promise<Chat[]> {
     const token = localStorage.getItem('accessToken');
-    const response = await axios.get(`${API_URL}/chat/`, {
+    const response = await axios.get(`/api/chat/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data.chats;
@@ -14,7 +14,7 @@ export const chatService = {
 
   async getChat(chatId: number): Promise<Chat> {
     const token = localStorage.getItem('accessToken');
-    const response = await axios.get(`${API_URL}/chat/${chatId}`, {
+    const response = await axios.get(`/api/chat/${chatId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -25,7 +25,7 @@ export const chatService = {
   ): Promise<SendMessageResponse> {
     const token = localStorage.getItem('accessToken');
     const response = await axios.post(
-      `${API_URL}/ai/analyze`,
+      `/api/ai/analyze`,
       {
         message: data.message,
         chat_id: data.chat_id,
@@ -49,7 +49,7 @@ export const chatService = {
   async updateChatTitle(chatId: number, title: string): Promise<Chat> {
     const token = localStorage.getItem('accessToken');
     const response = await axios.put(
-      `${API_URL}/chat/${chatId}`,
+      `/api/chat/${chatId}`,
       { title },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -58,7 +58,7 @@ export const chatService = {
 
   async deleteChat(chatId: number): Promise<void> {
     const token = localStorage.getItem('accessToken');
-    await axios.delete(`${API_URL}/chat/${chatId}`, {
+    await axios.delete(`/api/chat/${chatId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
