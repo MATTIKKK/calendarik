@@ -255,7 +255,7 @@
 
   /* сдвигаем область сообщений под header и над footer */
   .chat-messages {
-    margin-top: 5rem;
+    margin-top: 10rem;
   }
 
   .chat-title {
@@ -272,7 +272,7 @@
   }
   .chat-quick {
     position: fixed;
-    bottom: 150px;
+    bottom: 50px;
     left: 0;
     width: 100%;
     gap: 0.35rem;
