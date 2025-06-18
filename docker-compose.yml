@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: calendarik-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+  frontend:
+    build: ./front
+    container_name: calendarik-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./front:/app
+    stdin_open: true
+    tty: true
+
+  db:
+    image: postgres:15
+    container_name: calendarik-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Kukuruza26
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "55432:5432"
+
+volumes:
+  pgdata:

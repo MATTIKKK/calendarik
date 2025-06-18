@@ -16,7 +16,10 @@ class AIService:
     """Wrapper around OpenAI Chat API with calendar awareness."""
 
     def __init__(self) -> None:
-        self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        self.client = AsyncOpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            base_url="https://api.openai.com/v1"  
+        )
         self.model: str = settings.OPENAI_MODEL
 
     def _create_system_prompt(

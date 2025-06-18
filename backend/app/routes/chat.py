@@ -2,7 +2,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
-from app.services.ai_service import AIService   # импортируем класс
+from app.services.ai_service import AIService  
+
 ai_service = AIService()    
 
 from app.core.database import get_db
