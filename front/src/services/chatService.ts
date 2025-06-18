@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Chat, SendMessageRequest, SendMessageResponse } from '../types/chat';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://128.251.224.196:8000/api';
 
 export const chatService = {
   async getChats(): Promise<Chat[]> {
