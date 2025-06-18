@@ -67,7 +67,7 @@
   transform: translateX(-100%);
   transition: transform var(--transition);
   position: fixed;
-  z-index: 40;
+  z-index: 1040;
 }
 .sidebar.open { transform: translateX(0); }
 @media (min-width: 1024px) {
