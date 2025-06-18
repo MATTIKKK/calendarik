@@ -239,6 +239,8 @@
     left: 0;
     width: 100%;
     z-index: 1000;
+    /* отделяем от контента */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
   .chat-input-wrap {
     position: fixed;
@@ -246,15 +248,18 @@
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: var(--color-bg); /* чтобы не просвечивал контент */
+    /* фон отличающийся от белого */
+    background: var(--color-bg-gradient-middle);
+    /* лёгкая тень наверх */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
   }
 
-  /* Подвинуть область сообщений ниже header и выше footer */
+  /* сдвигаем область сообщений под header и над footer */
   .chat-messages {
-    padding-top: calc(1rem + 3rem);    /* 1rem исходной + ~3rem высоты header */
-    padding-bottom: calc(1rem + 3.5rem); /* 1rem исходной + ~3.5rem высоты footer */
+    padding-top: calc(1rem + 3rem);    /* 1rem по умолчанию + высота header (~3rem) */
+    padding-bottom: calc(1rem + 4rem); /* 1rem + высота footer (~4rem) */
   }
-  
+
   .chat-title {
     font-size: 1rem;
   }
