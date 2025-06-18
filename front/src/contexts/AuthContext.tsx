@@ -135,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
     setUser(null);
     setToken(null);
+    window.location.href = '/';
   };
 
   /* ---------- инициализация ---------- */
