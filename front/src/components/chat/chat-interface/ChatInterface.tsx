@@ -8,71 +8,21 @@ import {
   Mic,
   MicOff,
 } from 'lucide-react';
-import { Message, AssistantPersonality } from '../../../types';
 import { Chat } from '../../../types/chat';
+import { Message, AssistantPersonality } from '../../../types/message';
 // import { chatService } from '../../../services/chatService';
 import { MessageBubble } from '../message-bubble/MessageBubble';
 import { TypingIndicator } from '../typing-indicator/TypingIndicator';
 import './chat-interface.css';
 import axios from 'axios';
 import { useAuth } from '../../../contexts/AuthContext';
-
-const WELCOME_TEXT = 'Привет! Я ваш личный помощник-планировщик. Чем могу помочь?';
-
-export const personalities: AssistantPersonality[] = [
-  {
-    id: 'assistant',
-    name: 'Professional Assistant',
-    description: 'Formal…',
-    tone: 'assistant',
-    avatar: '💼',
-  },
-  {
-    id: 'coach',
-    name: 'Motivational Coach',
-    description: 'Energetic…',
-    tone: 'coach',
-    avatar: '💪',
-  },
-  {
-    id: 'friend',
-    name: 'Best Friend',
-    description: 'Casual…',
-    tone: 'friend',
-    avatar: '👥',
-  },
-  {
-    id: 'girlfriend',
-    name: 'Caring Girlfriend',
-    description: 'Sweet…',
-    tone: 'girlfriend',
-    avatar: '💕',
-  },
-  {
-    id: 'boyfriend',
-    name: 'Supportive Boyfriend',
-    description: 'Protective…',
-    tone: 'boyfriend',
-    avatar: '❤️',
-  },
-];
-
-/* быстрые ответы */
-const quickMessages = [
-  'Schedule a meeting',
-  "What's my schedule today?",
-  'Find free time this week',
-  'Cancel my 3pm appointment',
-];
+import { API_URL } from '../../../config';
+import { fetchChatHistory } from '../../../api/ChatApi';
+import { personalities } from '../../../constants/personalities';
+import { quickMessages } from '../../../constants/chat';
 
 interface ChatInterfaceProps {
   onChatCreated?: (chat: Chat) => void;
-}
-interface ChatMessageDTO {
-  id: number;
-  content: string;
-  role: string;
-  created_at: string;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
@@ -96,31 +46,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
 
     (async () => {
       try {
-        const { data } = await axios.get<ChatMessageDTO[]>(
-          `/api/chat/${chatId}/messages`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        let msgs: Message[] = data
-          .slice()
-          .reverse()
-          .map((m) => ({
-            id: m.id.toString(),
-            content: m.content,
-            sender: m.role === 'assistant' ? 'assistant' : 'user',
-            timestamp: new Date(m.created_at),
-          }));
-
-        if (msgs.length === 0) {
-          msgs = [
-            {
-              id: 'welcome',
-              content: WELCOME_TEXT,
-              sender: 'assistant',
-              timestamp: new Date(),
-            },
-          ];
-        }
-
+        const msgs = await fetchChatHistory(chatId, token);
         setMessages(msgs);
       } catch (err) {
         console.error('Failed to load history', err);
@@ -154,7 +80,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
 
     try {
       const { data } = await axios.post(
-        '/api/chat/message',
+        `${API_URL}/api/chat/message`,
         {
           message: content,
           personality: personality.id,
@@ -225,7 +151,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     setPersonality(next);
     try {
       await axios.put(
-        '/api/auth/me/personality',
+        `${API_URL}/api/auth/me/personality`,
         { personality: personalityId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -247,7 +173,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
     if (!token) return;
 
     axios
-      .get<{ id: number }>('/api/chat/me', {
+      .get<{ id: number }>(`${API_URL}/api/chat/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(({ data }) => {
@@ -268,11 +194,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
           </div>
           <div>
             <h3 className="chat-title">Calendarik</h3>
-            {/* <p className="chat-subtitle">
-              {personality
-                ? personality.name
-                : 'Your personal planning companion'}
-            </p> */}
           </div>
         </div>
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import './auth-forms.css';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Alert } from '../../common/alert/Alert';
+import { Alert } from '../../alert/Alert';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {

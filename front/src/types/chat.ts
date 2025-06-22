@@ -19,6 +19,7 @@ export interface Chat {
 export interface SendMessageRequest {
   message: string;
   chat_id?: number;
+  personality: string;
 }
 
 export interface SendMessageResponse {

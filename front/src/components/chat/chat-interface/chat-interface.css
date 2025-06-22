@@ -256,6 +256,7 @@
   /* сдвигаем область сообщений под header и над footer */
   .chat-messages {
     margin-top: 4rem;
+    margin-bottom: 100px;
     height: fit-content;
   }
 
@@ -273,7 +274,7 @@
   }
   .chat-quick {
     position: fixed;
-    bottom: 120px;
+    bottom: 100px;
     left: 0;
     width: 100%;
     gap: 0.35rem;
@@ -281,6 +282,7 @@
   .quick-btn {
     padding: 0.18rem 0.6rem;
     font-size: 0.7rem;
+    background: white;
   }
   .chat-textarea {
     font-size: 0.85rem;

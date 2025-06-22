@@ -1,4 +1,4 @@
-import { AssistantPersonality } from "../types/landing";
+import { AssistantPersonality } from "../types/message";
 
 export const personalities: AssistantPersonality[] = [
   {

@@ -12,4 +12,5 @@ export interface AssistantPersonality {
   description: string;
   tone: 'coach' | 'assistant' | 'friend' | 'girlfriend' | 'boyfriend';
   avatar: string;
+  color: string;
 }

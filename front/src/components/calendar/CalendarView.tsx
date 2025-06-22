@@ -12,6 +12,7 @@ import { Event } from '../../types';
 import { DayScheduleModal } from './DayScheduleModal';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../config';
 
 export const CalendarView: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -41,7 +42,7 @@ export const CalendarView: React.FC = () => {
       );
 
       const response = await axios.get(
-        `/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
+        `${API_URL}/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

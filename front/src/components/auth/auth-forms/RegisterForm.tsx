@@ -4,7 +4,7 @@ import './auth-forms.css';
 import { RegisterData } from '../../../types';
 import { useAuth } from '../../../contexts/AuthContext';
 import moment from 'moment-timezone';
-import { Alert } from '../../common/alert/Alert';
+import { Alert } from '../../alert/Alert';
 import { useNavigate } from 'react-router-dom';
 import { ITimezoneOption } from 'react-timezone-select';
 
