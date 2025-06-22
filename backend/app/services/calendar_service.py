@@ -33,6 +33,29 @@ class CalendarService:
             CalendarEvent.start_time < end,
             or_(CalendarEvent.end_time.is_(None), CalendarEvent.end_time > start),
         )
+        
+        
+    def try_create_event_from_ai(self, data: dict) -> Optional[int]:
+        try:
+            if not all(k in data for k in ["title", "startTime"]):
+                raise ValueError("Missing fields")
+            start = datetime.fromisoformat(data["startTime"].replace("Z", "+00:00"))
+            end = datetime.fromisoformat(data["endTime"].replace("Z", "+00:00")) if "endTime" in data else None
+            event = CalendarEvent(
+                title=data["title"],
+                description=data.get("description"),
+                start_time=start,
+                end_time=end,
+                owner_id=self.user.id
+            )
+            self.db.add(event)
+            self.db.commit()
+            self.db.refresh(event)
+            return event.id
+        except Exception as e:
+            print(f"[CalendarService] Event creation error: {e}")
+            return None
+
 
     # ───────────────────— чтение расписания —─────────────────────
     def get_events_for_day(self, date_local: datetime) -> List[CalendarEvent]:

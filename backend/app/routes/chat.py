@@ -1,124 +1,103 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from datetime import datetime
-from app.services.ai_service import AIService  
 
-ai_service = AIService()    
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.routes.auth import get_current_user
+from app.dependencies.user import get_current_user
 from app.models import User, Chat, ChatMessage
-from app.schemas.chat import AIChatRequest, AIChatResponse, ChatMessageResponse, ChatResponse
+from app.schemas.chat import (
+    AIChatRequest,
+    AIChatResponse,
+    ChatMessageResponse,
+    ChatResponse,
+)
+from app.services.ai_service import AIService
+from app.services.chat_service import ChatService
 from app.services.calendar_service import CalendarService
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter()
 
-def get_or_create_chat(db: Session, user: User) -> Chat:
-    chat = (
-        db.query(Chat)
-        .filter(Chat.owner_id == user.id)
-        .order_by(Chat.created_at.asc())
-        .first()
-    )
-    if chat:
-        return chat
+def get_chat_service(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ChatService:
+    return ChatService(db, current_user)
 
-    chat = Chat(title="Bro", owner_id=user.id, created_at=datetime.utcnow())
-    db.add(chat)
-    db.commit()
-    db.refresh(chat)
-    return chat
+
+def get_calendar_service(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> CalendarService:
+    return CalendarService(db, current_user)
+
+
+ai_service = AIService()
 
 
 @router.post("/message", response_model=AIChatResponse)
 async def send_message(
     req: AIChatRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    chat_svc: ChatService      = Depends(get_chat_service),
+    cal_svc: CalendarService  = Depends(get_calendar_service),
 ):
-    chat = get_or_create_chat(db, current_user)
+    # Получаем или создаём чат
+    chat = chat_svc.get_or_create_chat()
 
-    # сохраняем сообщение пользователя
-    user_msg = ChatMessage(content=req.message, role="user", chat_id=chat.id)
-    db.add(user_msg)
+    # Сохраняем входящее сообщение
+    chat_svc.add_message(chat, req.message, role="user")
 
-    # вызываем AI-сервис
+    # Запрашиваем ответ у AI
     ai_reply = await ai_service.analyze_message(
         message=req.message,
-        personality=req.personality or current_user.chat_personality,
-        user_gender=current_user.gender,
+        personality=req.personality or chat_svc.user.chat_personality,
+        user_gender=chat_svc.user.gender,
         language=req.language or "Russian",
-        calendar_service=CalendarService(db, current_user),
+        calendar_service=cal_svc,
     )
-    
-    # сохраняем ответ ассистента
-    print("ai_reply", ai_reply)
-    assistant_msg = ChatMessage(
-        content=ai_reply["message"], role="assistant", chat_id=chat.id
-    )
-    db.add(assistant_msg)
-    db.commit()
+
+    # Сохраняем ответ ассистента
+    chat_svc.add_message(chat, ai_reply["message"], role="assistant")
 
     return AIChatResponse(message=ai_reply["message"], chat_id=chat.id)
 
 
 @router.get("/{chat_id}/messages", response_model=List[ChatMessageResponse])
-async def get_chat_messages(
-    chat_id: int,
-    limit: int = 50,
-    before_id: Optional[int] = None,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    # проверяем, что чат принадлежит юзеру
-    exists = (
-        db.query(Chat)
-        .filter(Chat.id == chat_id, Chat.owner_id == current_user.id)
-        .first()
-    )
-    if not exists:
-        raise HTTPException(status_code=404, detail="Chat not found")
+def get_chat_messages(
+    chat_id:    int,
+    limit:      int               = Query(50, gt=0),
+    before_id:  Optional[int]     = Query(None, gt=0),
+    chat_svc:   ChatService       = Depends(get_chat_service),
+) -> List[ChatMessage]:
+    # Проверяем, что чат существует и принадлежит пользователю
+    chat_svc.ensure_ownership(chat_id)
 
-    query = (
-        db.query(ChatMessage)
-        .filter(ChatMessage.chat_id == chat_id)
-        .order_by(ChatMessage.created_at.desc())
-    )
-    if before_id:
-        query = query.filter(ChatMessage.id < before_id)
-
-    return query.limit(limit).all()
-
+    # Получаем сообщения
+    return chat_svc.get_messages(chat_id, limit=limit, before_id=before_id)
 
 
 @router.get("/search", response_model=List[ChatMessageResponse])
-async def search_messages(
-    query: str,
-    limit: int = 20,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    chat = get_or_create_chat(db, current_user)
+def search_messages(
+    query:   str             = Query(..., min_length=1),
+    limit:   int             = Query(20, gt=0),
+    chat_svc: ChatService    = Depends(get_chat_service),
+) -> List[ChatMessage]:
+    # Всегда работает с «личным» чатом
+    chat = chat_svc.get_or_create_chat()
+    return chat_svc.search_messages(chat, query=query, limit=limit)
 
-    return (
-        db.query(ChatMessage)
-        .filter(
-            ChatMessage.chat_id == chat.id,
-            ChatMessage.content.ilike(f"%{query}%"),
-        )
-        .order_by(ChatMessage.created_at.desc())
-        .limit(limit)
-        .all()
-    )
 
-@router.get("/me", response_model=ChatResponse)      # ← новый энд-поинт
-async def get_my_chat(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+@router.get("/me", response_model=ChatResponse)
+def get_my_chat(
+    chat_svc: ChatService = Depends(get_chat_service),
+) -> Chat:
     """
-    Вернуть личный чат пользователя (создать, если ещё не существует).
+    Возвращает данные личного чата (создаёт, если ещё нет).
     """
-    chat = get_or_create_chat(db, current_user)
-    return chat
+    return chat_svc.get_or_create_chat()

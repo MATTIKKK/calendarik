@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from fastapi import HTTPException
 import json
 import re
 from datetime import datetime, timedelta, timezone
@@ -10,6 +10,11 @@ from openai import AsyncOpenAI, OpenAIError
 
 from app.core.config import settings
 from app.services.calendar_service import CalendarService
+from app.services.chat_service import ChatService
+from app.schemas.ai import AIMessageRequest
+from app.models import User, Chat, ChatMessage, CalendarEvent
+
+
 
 
 class AIService:
@@ -66,6 +71,46 @@ class AIService:
         if calendar_context:
             parts.append(calendar_context[:1000])
         return "\n".join(parts)
+    
+    async def handle_analysis(self, request: AIMessageRequest, db, user: User):
+        chat_service = ChatService(db, user)
+        calendar_service = CalendarService(db, user)
+
+        personality = request.personality or user.chat_personality
+        language = request.language or await self.detect_language(request.message)
+
+        # 1. Get/create chat
+        if request.chat_id:
+            chat = chat_service.get_chat(request.chat_id)
+            if not chat:
+                raise HTTPException(404, "Chat not found")
+        else:
+            chat = chat_service.create_chat(request.message[:50] + "...")
+
+        # 2. Save message
+        chat_service.add_message(chat.id, request.message, "user")
+
+        # 3. AI reply
+        analysis = await self.analyze_message(
+            message=request.message,
+            personality=personality,
+            user_gender=user.gender,
+            language=language,
+            calendar_service=calendar_service
+        )
+
+        chat_service.add_message(chat.id, analysis["message"], "assistant")
+
+        # 4. Try create event
+        calendar_event_id = None
+        if analysis["calendar_data"] and analysis["should_create_event"]:
+            calendar_event_id = calendar_service.try_create_event_from_ai(analysis["calendar_data"])
+
+        return {
+            "message": analysis["message"],
+            "chat_id": chat.id,
+            "calendar_event_id": calendar_event_id
+        }
 
     async def analyze_message(
         self,

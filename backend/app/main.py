@@ -12,7 +12,7 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",  
-    "https://matiks-plan.netlify.app"
+    "https://nechaos.netlify.app"
 ]
 
 # Configure CORS
@@ -27,7 +27,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["calendar"])
-app.include_router(chat.router, prefix="/api", tags=["chat"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 
 
