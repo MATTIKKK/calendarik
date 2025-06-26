@@ -15,19 +15,23 @@ from app.services.ai_service import AIService
 from app.services.chat_service import ChatService
 from app.services.calendar_service import CalendarService
 from app.schemas.chat import ChatMessageResponse, ChatResponse
+from sqlalchemy.orm import Session
+from app.core.database import get_db
 
 
 router = APIRouter()
 ai_service = AIService()
 
+
 @router.post("/message", response_model=AIMessageResponse)
 async def send_message(
     req: AIMessageRequest,
     chat_svc: ChatService = Depends(get_chat_service),
-    cal_svc: CalendarService = Depends(get_calendar_service),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     print("req in send_message", req)
-    
+
     chat = chat_svc.get_or_create_chat()
     print("chat in send_message", chat)
 
@@ -37,27 +41,44 @@ async def send_message(
         content=req.message,
     )
 
-    analysis = await ai_service.handle_analysis(req, db=chat_svc.db, user=chat_svc.user)
+    analysis = await ai_service.analyze_message(
+        message=req.message,
+        personality=current_user.chat_personality,
+        user_gender=current_user.gender,
+        language=current_user.preferred_language,
+        calendar_service=CalendarService(db, current_user),
+    )
 
     print("analysis in send_message", analysis)
 
     ai_reply = {
         "message":      analysis["message"],
-        "chat_id":      analysis["chat_id"],
         "calendar_event_id": analysis.get("calendar_event_id"),
     }
 
     print("ai_reply in send_message", ai_reply)
 
-    print("AIMessageResponse in send_message", AIMessageResponse(message=ai_reply["message"], chat_id=chat.id))
-    return AIMessageResponse(message=ai_reply["message"], chat_id=chat.id)
+    print("AIMessageResponse in send_message", AIMessageResponse(
+        message=ai_reply["message"], chat_id=chat.id))
+    
+    calendar_event_id: Optional[int] = (
+        int(analysis["event_id"]) if analysis.get("event_id") else None
+    )
+    
+    chat_svc.add_message(chat.id, "assistant", analysis["message"])
+    
+    return AIMessageResponse(
+        message=analysis["message"],
+        chat_id=chat.id,
+        calendar_event_id=calendar_event_id,  
+    )
 
 
 @router.get("/me/messages", response_model=List[ChatMessageResponse])
 def get_my_messages(
-    limit:     int               = Query(50, gt=0),
-    before_id: Optional[int]    = Query(None, gt=0),
-    chat_svc:  ChatService      = Depends(get_chat_service),
+    limit:     int = Query(50, gt=0),
+    before_id: Optional[int] = Query(None, gt=0),
+    chat_svc:  ChatService = Depends(get_chat_service),
 ) -> List[ChatMessageResponse]:
     chat = chat_svc.get_or_create_chat()
     return chat_svc.get_chat_messages(
@@ -66,13 +87,14 @@ def get_my_messages(
         before_id=before_id,
     )
 
+
 @router.get("/search", response_model=List[ChatMessageResponse])
 def search_messages(
     query:   str = Query(..., min_length=1),
     limit:   int = Query(20, gt=0),
-    chat_svc: ChatService = Depends(get_chat_service),  
+    chat_svc: ChatService = Depends(get_chat_service),
 ) -> List[ChatMessage]:
-    
+
     chat = chat_svc.get_or_create_chat()
     return chat_svc.search_messages(chat, query=query, limit=limit)
 
@@ -81,6 +103,6 @@ def search_messages(
 def get_my_chat(
     chat_svc: ChatService = Depends(get_chat_service),
 ) -> ChatResponse:
-    
+
     print("chat_svc in get_my_chat", chat_svc)
     return chat_svc.get_or_create_chat()

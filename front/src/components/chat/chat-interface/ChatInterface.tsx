@@ -27,7 +27,9 @@ export const ChatInterface: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [personalityId, setPersonalityId] = useState(user?.chat_personality ?? personalities[0].id);
+  const [personalityId, setPersonalityId] = useState(user?.chat_personality);
+
+  console.log("user chat personality", user?.chat_personality)
   const [chatId, setChatId] = useState<number | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -44,6 +46,13 @@ export const ChatInterface: React.FC = () => {
       }
     })();
   }, [chatId, token, t]);
+
+  useEffect(() => {
+    if (user?.chat_personality && user.chat_personality !== personalityId) {
+      setPersonalityId(user.chat_personality);
+    }
+
+  }, [user?.chat_personality])
 
   // автоскролл
   useEffect(() => {
@@ -65,7 +74,6 @@ export const ChatInterface: React.FC = () => {
     const content = (text ?? inputMessage).trim();
     if (!content) return;
 
-    // показываем своё сообщение сразу
     setMessages(prev => [
       ...prev,
       { id: Date.now().toString(), content, sender: 'user', timestamp: new Date() },
@@ -135,9 +143,10 @@ export const ChatInterface: React.FC = () => {
     if (!token) return;
     setPersonalityId(newId);
     try {
-      await axios.put(`${API_URL}/api/user/me/personality`, { personality: newId }, {
+      const result = await axios.put(`${API_URL}/api/user/me/personality`, { personality: newId }, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("result in chat personality", result)
       setUser({ ...user!, chat_personality: newId });
     } catch (err) {
       console.error(t('chat.errors.updatePersonality'), err);

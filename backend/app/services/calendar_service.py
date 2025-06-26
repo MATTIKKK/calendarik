@@ -33,29 +33,6 @@ class CalendarService:
             CalendarEvent.start_time < end,
             or_(CalendarEvent.end_time.is_(None), CalendarEvent.end_time > start),
         )
-        
-        
-    def try_create_event_from_ai(self, data: dict) -> Optional[int]:
-        try:
-            if not all(k in data for k in ["title", "startTime"]):
-                raise ValueError("Missing fields")
-            start = datetime.fromisoformat(data["startTime"].replace("Z", "+00:00"))
-            end = datetime.fromisoformat(data["endTime"].replace("Z", "+00:00")) if "endTime" in data else None
-            event = CalendarEvent(
-                title=data["title"],
-                description=data.get("description"),
-                start_time=start,
-                end_time=end,
-                owner_id=self.user.id
-            )
-            self.db.add(event)
-            self.db.commit()
-            self.db.refresh(event)
-            return event.id
-        except Exception as e:
-            print(f"[CalendarService] Event creation error: {e}")
-            return None
-
 
     # ───────────────────— чтение расписания —─────────────────────
     def get_events_for_day(self, date_local: datetime) -> List[CalendarEvent]:
@@ -253,7 +230,9 @@ class CalendarService:
         try:
             self.db.add(ev)
             self.db.flush()
+            
             self.db.refresh(ev)
+            self.db.commit() 
             return ev
         except SQLAlchemyError:
             self.db.rollback()
@@ -293,19 +272,3 @@ class CalendarService:
         else:
             print("[DEL] nothing matched")
             return False         # ничего не нашли
-        
-    def get_events_for_range(
-        self,
-        start_utc: datetime,
-        end_utc:   datetime
-    ) -> List[CalendarEvent]:
-        """
-        Возвращает все события пользователя, которые пересекают
-        период [start_utc, end_utc) в UTC.
-        """
-        return (
-            self.db.query(CalendarEvent)
-            .filter(and_(*self._window_query(start_utc, end_utc)))
-            .order_by(CalendarEvent.start_time)
-            .all()
-        )
