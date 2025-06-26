@@ -293,4 +293,19 @@ class CalendarService:
         else:
             print("[DEL] nothing matched")
             return False         # ничего не нашли
-
+        
+    def get_events_for_range(
+        self,
+        start_utc: datetime,
+        end_utc:   datetime
+    ) -> List[CalendarEvent]:
+        """
+        Возвращает все события пользователя, которые пересекают
+        период [start_utc, end_utc) в UTC.
+        """
+        return (
+            self.db.query(CalendarEvent)
+            .filter(and_(*self._window_query(start_utc, end_utc)))
+            .order_by(CalendarEvent.start_time)
+            .all()
+        )

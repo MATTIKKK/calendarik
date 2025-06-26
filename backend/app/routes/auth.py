@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
@@ -12,14 +12,13 @@ from app.schemas.auth import UserCreate, Token, UserResponse, RefreshToken
 
 router = APIRouter()
 
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ) -> UserResponse:
-    """
-    Register a new user if email is not already used.
-    """
+    
     existing_user = db.query(User).filter_by(email=user_data.email).first()
     if existing_user:
         raise HTTPException(
@@ -54,9 +53,7 @@ def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ) -> Token:
-    """
-    Authenticate user and return access and refresh tokens.
-    """
+
     user = db.query(User).filter_by(email=form_data.username).first()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
@@ -73,6 +70,7 @@ def login_user(
         refresh_token=refresh_token,
         token_type="bearer"
     )
+
 
 @router.post("/refresh", response_model=Token)
 def refresh_access_token(

@@ -1,130 +1,117 @@
+// src/components/chat/ChatInterface.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Send,
   Bot,
-  Calendar,
-  Clock,
   AlertTriangle,
   Mic,
   MicOff,
 } from 'lucide-react';
-import { Chat } from '../../../types/chat';
-import { Message, AssistantPersonality } from '../../../types/message';
-// import { chatService } from '../../../services/chatService';
-import { MessageBubble } from '../message-bubble/MessageBubble';
-import { TypingIndicator } from '../typing-indicator/TypingIndicator';
-import './chat-interface.css';
 import axios from 'axios';
 import { useAuth } from '../../../contexts/AuthContext';
 import { API_URL } from '../../../config';
 import { fetchChatHistory } from '../../../api/ChatApi';
 import { personalities } from '../../../constants/personalities';
-import { quickMessages } from '../../../constants/chat';
+import { Message } from '../../../types/message';
+import { Chat } from '../../../types/chat';
+import { MessageBubble } from '../message-bubble/MessageBubble';
+import { TypingIndicator } from '../typing-indicator/TypingIndicator';
+import './chat-interface.css';
+import { useTranslation } from 'react-i18next';
 
-interface ChatInterfaceProps {
-  onChatCreated?: (chat: Chat) => void;
-}
+export const ChatInterface: React.FC = () => {
+  const { t } = useTranslation();
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
   const { token, user, setUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [personality, setPersonality] = useState<AssistantPersonality>(
-    personalities.find((p) => p.id === user?.chat_personality) ??
-      personalities[0]
-  );
-  const [chatId, setChatId] = useState<number | null>(user?.chat_id ?? null);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
-    null
-  );
+  const [personalityId, setPersonalityId] = useState(user?.chat_personality ?? personalities[0].id);
+  const [chatId, setChatId] = useState<number | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // загрузка истории
   useEffect(() => {
     if (!token || chatId === null) return;
-
     (async () => {
       try {
         const msgs = await fetchChatHistory(chatId, token);
         setMessages(msgs);
       } catch (err) {
-        console.error('Failed to load history', err);
+        console.error(t('chat.errors.loadHistory'), err);
       }
     })();
-  }, [chatId, token]);
+  }, [chatId, token, t]);
 
-  /* -------- 2. автоскролл -------- */
+  // автоскролл
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  /* -------- 3. отправка сообщения -------- */
+  // создание/получение chatId
+  useEffect(() => {
+    if (!token) return;
+    axios.get<Chat>(`${API_URL}/api/chat/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then(res => setChatId(res.data.id))
+    .catch(err => console.error(t('chat.errors.loadChat'), err));
+  }, [token, t]);
+
   const send = async (text?: string) => {
     if (!token || isTyping) return;
     const content = (text ?? inputMessage).trim();
     if (!content) return;
 
-    // оптимистично показываем
-    setMessages((prev) => [
+    // показываем своё сообщение сразу
+    setMessages(prev => [
       ...prev,
-      {
-        id: Date.now().toString(),
-        content,
-        sender: 'user',
-        timestamp: new Date(),
-      },
+      { id: Date.now().toString(), content, sender: 'user', timestamp: new Date() },
     ]);
     setInputMessage('');
     setIsTyping(true);
 
     try {
-      const { data } = await axios.post(
-        `${API_URL}/api/chat/message`,
-        {
-          message: content,
-          personality: personality.id,
-          chat_id: chatId ?? undefined,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await axios.post(`${API_URL}/api/chat/message`, {
+        message: content,
+        personality: personalityId,
+        chat_id: chatId ?? undefined,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      // если это первое сообщение — запоминаем chatId
       if (chatId === null) setChatId(data.chat_id);
 
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          content: data.message,
-          sender: 'assistant',
-          timestamp: new Date(),
-        },
+        { id: (Date.now()+1).toString(), content: data.message, sender: 'assistant', timestamp: new Date() },
       ]);
     } catch (err) {
-      console.error('Failed to send message', err);
+      console.error(t('chat.errors.send'), err);
     } finally {
       setIsTyping(false);
     }
   };
 
-  /* — горячая клавиша Enter — */
-  const keyPress = (e: React.KeyboardEvent) => {
+  // Enter → отправка
+  const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       send();
     }
   };
 
-  /* — микрофон — */
-  const startRec = async () => {
+  // микрофон (симуляция)
+  const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
       rec.ondataavailable = (e) => {
         if (e.data.size) {
           setTimeout(() => {
-            setInputMessage('This is a simulated voice message transcription');
+            setInputMessage(t('chat.voiceSimulated'));
             setIsRecording(false);
           }, 2000);
         }
@@ -133,78 +120,50 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
       setMediaRecorder(rec);
       setIsRecording(true);
     } catch {
-      alert('Unable to access microphone. Check permissions.');
+      alert(t('chat.errors.micPermission'));
     }
   };
-
-  const stopRec = () => {
+  const stopRecording = () => {
     mediaRecorder?.stop();
-    mediaRecorder?.stream.getTracks().forEach((t) => t.stop());
+    mediaRecorder?.stream.getTracks().forEach(t => t.stop());
     setMediaRecorder(null);
     setIsRecording(false);
   };
 
-  const handlePersonalityChange = async (personalityId: string) => {
+  // смена личности
+  const changePersonality = async (newId: string) => {
     if (!token) return;
-
-    const next = personalities.find((p) => p.id === personalityId)!;
-    setPersonality(next);
+    setPersonalityId(newId);
     try {
-      await axios.put(
-        `${API_URL}/api/auth/me/personality`,
-        { personality: personalityId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setUser({ ...user!, chat_personality: personalityId });
-    } catch (error) {
-      console.error('Failed to update personality:', error);
+      await axios.put(`${API_URL}/api/user/me/personality`, { personality: newId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser({ ...user!, chat_personality: newId });
+    } catch (err) {
+      console.error(t('chat.errors.updatePersonality'), err);
     }
   };
 
-  useEffect(() => {
-    if (user?.chat_personality) {
-      const p = personalities.find((p) => p.id === user.chat_personality);
-      if (p) setPersonality(p);
-    }
-  }, [user?.chat_personality]);
+  // быстрые ответы и бейджи из локалей
+  const quickMessages = t('chat.quickMessages', { returnObjects: true }) as string[];
+  const badges = t('chat.badges', { returnObjects: true }) as string[];
 
-  useEffect(() => {
-    if (!token) return;
-
-    axios
-      .get<{ id: number }>(`${API_URL}/api/chat/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(({ data }) => {
-        setChatId(data.id);
-        console.log('chatId in useEffect', data.id);
-      })
-      .catch(console.error);
-  }, [token]);
-
-  /* — JSX — */
   return (
     <div className="chat-root">
       {/* header */}
       <header className="chat-header">
         <div className="chat-header-left">
-          <div className="chat-avatar">
-            <Bot size={24} />
-          </div>
-          <div>
-            <h3 className="chat-title">Calendarik</h3>
-          </div>
+          <div className="chat-avatar"><Bot size={24} /></div>
+          <h3 className="chat-title">{t('chat.title')}</h3>
         </div>
-
         <select
           className="pers-select"
-          value={personality.id}
-          onChange={(e) => handlePersonalityChange(e.target.value)}
+          value={personalityId}
+          onChange={e => changePersonality(e.target.value)}
         >
-          {personalities.map((p) => (
+          {personalities.map(p => (
             <option key={p.id} value={p.id}>
-              {p.avatar} {p.name}
+              {p.avatar} {t(`personalities.${p.id}.name`)}
             </option>
           ))}
         </select>
@@ -212,18 +171,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
 
       {/* сообщения */}
       <main className="chat-messages">
-        {messages.map((m) => (
-          <MessageBubble key={m.id} message={m} />
-        ))}
+        {messages.map(m => <MessageBubble key={m.id} message={m} />)}
         {isTyping && <TypingIndicator />}
         <div ref={endRef} />
       </main>
 
       {/* быстрые ответы */}
       <section className="chat-quick">
-        {quickMessages.map((msg, i) => (
-          <button key={i} onClick={() => send(msg)} className="quick-btn">
-            {msg}
+        {quickMessages.map((q, i) => (
+          <button key={i} onClick={() => send(q)} className="quick-btn">
+            {q}
           </button>
         ))}
       </section>
@@ -233,40 +190,35 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = () => {
         <div className="chat-textarea-block">
           <textarea
             rows={2}
+            placeholder={t('chat.placeholder')}
             value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={keyPress}
-            placeholder="Tell me about your plans, tasks, or deadlines…"
+            onChange={e => setInputMessage(e.target.value)}
+            onKeyDown={onKeyDown}
             className="chat-textarea"
           />
           <button
-            onClick={isRecording ? stopRec : startRec}
+            onClick={isRecording ? stopRecording : startRecording}
             className={`mic-btn ${isRecording ? 'recording' : ''}`}
+            title={isRecording ? t('chat.mic.stop') : t('chat.mic.start')}
           >
-            {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+            {isRecording ? <MicOff size={16}/> : <Mic size={16}/>}
           </button>
         </div>
-
         <button
           onClick={() => send()}
           disabled={!inputMessage.trim() || isTyping}
           className="send-btn"
+          title={t('chat.send')}
         >
-          <Send size={20} />
+          <Send size={20}/>
         </button>
       </footer>
 
-      {/* нижние бейджи */}
+      {/* бейджи */}
       <div className="chat-badges">
-        <span>
-          <Calendar size={14} /> Calendar Integration
-        </span>
-        <span>
-          <Clock size={14} /> Smart Scheduling
-        </span>
-        <span>
-          <AlertTriangle size={14} /> Deadline Management
-        </span>
+        {badges.map((b, i) => (
+          <span key={i}><AlertTriangle size={14}/> {b}</span>
+        ))}
       </div>
     </div>
   );

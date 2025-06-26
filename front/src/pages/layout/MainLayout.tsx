@@ -1,4 +1,4 @@
-// MainLayout.tsx
+// src/layouts/MainLayout.tsx
 import React, { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +9,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { ChatInterface } from '../../components/chat/chat-interface/ChatInterface';
 import { CalendarView } from '../../components/calendar/CalendarView';
@@ -17,27 +18,30 @@ import './layout.css';
 type ActiveTab = 'chat' | 'calendar' | 'settings';
 
 export const MainLayout: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
-  const menuItems = [
-    { id: 'chat' as ActiveTab, icon: MessageCircle, label: 'Chat' },
-    { id: 'calendar' as ActiveTab, icon: CalendarIcon, label: 'Calendar' },
+  const menuItems: { id: ActiveTab; icon: React.FC<any>; label: string }[] = [
+    { id: 'chat', icon: MessageCircle, label: t('layout.nav.chat') },
+    { id: 'calendar', icon: CalendarIcon, label: t('layout.nav.calendar') },
   ];
 
   return (
     <div className="layout-root">
       {/* Mobile toggle */}
-      <button onClick={() => setMenuOpen(!menuOpen)} className="menu-btn">
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="menu-btn"
+        aria-label={menuOpen ? t('layout.nav.closeMenu') : t('layout.nav.openMenu')}
+      >
         {menuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       {/* Sidebar */}
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
-        {menuOpen && (
-          <div className="overlay" onClick={() => setMenuOpen(false)} />
-        )}
+        {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)} />}
         {/* Profile */}
         <section className="profile">
           <div className="avatar-lg">
@@ -49,14 +53,14 @@ export const MainLayout: React.FC = () => {
           </div>
         </section>
 
-        {/* Навигация */}
+        {/* Navigation */}
         <nav className="nav">
           <ul>
             {menuItems.map(({ id, icon: Icon, label }) => (
               <li key={id}>
                 <button
                   onClick={() => {
-                    navigate(id); // навигация в /app/chat или /app/calendar
+                    navigate(id);
                     setMenuOpen(false);
                   }}
                   className={`nav-btn ${
@@ -73,54 +77,52 @@ export const MainLayout: React.FC = () => {
 
         {/* Footer */}
         <div className="sidebar-footer">
-          <button onClick={() => navigate('settings')} className="nav-btn">
+          <button
+            onClick={() => { navigate('settings'); setMenuOpen(false); }}
+            className="nav-btn"
+          >
             <Settings size={20} />
-            <span>Settings</span>
+            <span>{t('layout.nav.settings')}</span>
           </button>
           <button onClick={logout} className="nav-btn logout">
             <LogOut size={20} />
-            <span>Logout</span>
+            <span>{t('layout.nav.logout')}</span>
           </button>
         </div>
       </aside>
 
-      {/* Основной контент + вложенные Routes */}
+      {/* Main content + nested Routes */}
       <main className="content">
         <Routes>
-          {/* при заходе на /app → редиректим в чат */}
           <Route index element={<Navigate to="chat" replace />} />
-
-          {/* собственно вкладки */}
           <Route path="chat" element={<ChatInterface />} />
           <Route path="calendar" element={<CalendarView />} />
           <Route
             path="settings"
             element={
               <div className="settings-card">
-                <h2>Settings</h2>
+                <h2>{t('layout.settings.title')}</h2>
                 <div className="settings-grid">
                   <label>
-                    Name
+                    {t('layout.settings.name')}
                     <input type="text" value={user?.full_name || ''} readOnly />
                   </label>
                   <label>
-                    Email
+                    {t('layout.settings.email')}
                     <input type="email" value={user?.email || ''} readOnly />
                   </label>
                   <label>
-                    Timezone
+                    {t('layout.settings.timezone')}
                     <input type="text" value={user?.timezone || ''} readOnly />
                   </label>
                   <label>
-                    Gender
+                    {t('layout.settings.gender')}
                     <input type="text" value={user?.gender || ''} readOnly />
                   </label>
                 </div>
               </div>
             }
           />
-
-          {/* всё что не найдено → обратно в чат */}
           <Route path="*" element={<Navigate to="chat" replace />} />
         </Routes>
       </main>

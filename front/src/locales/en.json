@@ -1,0 +1,375 @@
+{
+  "hero": {
+    "title": {
+      "part1": "Smart Calendar with",
+      "part2": "AI Assistant"
+    },
+    "subtitle": "Never struggle with scheduling again. Our AI chat assistant helps you find perfect time for any event, manages time zones, and learns your preferences.",
+    "cta": {
+      "tryFree": "Try Free Now",
+      "watchDemo": "Watch Demo"
+    },
+    "features": {
+      "freeForever": "Free forever plan",
+      "noCard": "No credit card required"
+    },
+    "chatLabel": "NeChaos AI Chat",
+    "chatExample": {
+      "user": "Hi! I need to schedule a dancing lesson for next week.",
+      "bot": "Perfect! I've analyzed your calendar. Here are 3 optimal time slots that work for you:",
+      "slotDate": "📅 Tuesday, March 14",
+      "bestMatch": "Best Match",
+      "newYork": "New York: 2:00 PM",
+      "london": "London: 7:00 PM",
+      "tokyo": "Tokyo: 3:00 AM+1",
+      "sydney": "Sydney: 5:00 AM+1",
+      "moreOptions": "More options",
+      "scheduleNow": "Schedule Now",
+      "powered": "AI-Powered"
+    }
+  },
+  "howItWorks": {
+    "heading": "How It Works in",
+    "highlight": "3 Simple Steps",
+    "subheading": "From chaos to perfectly organized calendar in minutes. No learning curve, no complexity.",
+    "steps": {
+      "chat": {
+        "title": "Chat with AI",
+        "description": "Tell our AI assistant about your plans in natural language. No complex forms or settings."
+      },
+      "analysis": {
+        "title": "AI Finds Perfect Times",
+        "description": "Our smart algorithm analyzes all schedules, preferences, and time zones to suggest optimal time slots."
+      },
+      "schedule": {
+        "title": "Schedule & Relax",
+        "description": "Confirm your choice and let NeChaos handle events, reminders, and calendar updates automatically."
+      }
+    },
+    "cta": {
+      "title": "Ready to experience the magic?",
+      "description": "Join thousands of users who've already simplified their scheduling.",
+      "button": "Start Your Free Trial"
+    }
+  },
+  "features": {
+    "heading": "Powerful Features for",
+    "highlight": "Modern Teams",
+    "subheading": "Everything you need to manage complex schedules with ease and intelligence.",
+    "items": [
+      {
+        "icon": "MessageSquare",
+        "title": "Instant Chat",
+        "description": "Talk to our AI in plain language—no menus or forms."
+      },
+      {
+        "icon": "Calendar",
+        "title": "Smart Suggestions",
+        "description": "Automatically finds slots based on your preferences and time zones."
+      },
+      {
+        "icon": "CheckCircle",
+        "title": "One-click Scheduling",
+        "description": "Confirm a time and let Calendarik handle the rest."
+      },
+      {
+        "icon": "Sparkles",
+        "title": "Adaptive Learning",
+        "description": "Our AI remembers your habits and gets smarter over time."
+      }
+    ],
+    "stats": {
+      "users": "50K+",
+      "usersLabel": "Active Users",
+      "meetings": "1M+",
+      "meetingsLabel": "Meetings Scheduled",
+      "uptime": "99.9%",
+      "uptimeLabel": "Uptime Guarantee"
+    }
+  },
+  "personality": {
+    "heading": "Choose Your AI Assistant's",
+    "highlight": "Personality",
+    "subheading": "Select how your personal AI assistant will communicate with you: professional, motivational, friendly, or caring 💖",
+    "previewLabel": "Preview"
+  },
+  "previewMessages": {
+    "assistant": "I've found 3 optimal time slots for your team meeting. Shall I send the invitations?",
+    "coach": "You've got this! I found some amazing time slots that'll work perfectly for everyone. Ready to crush this meeting?",
+    "friend": "Hey! Found some great times for your meeting. Want me to set it up for you?",
+    "girlfriend": "Hi sweetie! I found some perfect times for your meeting. I made sure to leave buffer time so you won't be stressed 💕",
+    "boyfriend": "Hey babe, got your meeting sorted. I blocked out some extra time before so you can prep properly ❤️"
+  },
+  "personalities": {
+    "assistant": {
+      "name": "Professional Assistant",
+      "description": "Formal and efficient tone",
+      "avatar": "💼",
+      "color": "from-blue-500 to-blue-600"
+    },
+    "coach": {
+      "name": "Motivational Coach",
+      "description": "Energetic and dynamic",
+      "avatar": "💪",
+      "color": "from-orange-500 to-red-500"
+    },
+    "friend": {
+      "name": "Best Friend",
+      "description": "Casual and informal",
+      "avatar": "👥",
+      "color": "from-green-500 to-emerald-500"
+    },
+    "girlfriend": {
+      "name": "Caring Girlfriend",
+      "description": "Sweet and supportive",
+      "avatar": "💕",
+      "color": "from-pink-500 to-rose-500"
+    },
+    "boyfriend": {
+      "name": "Supportive Boyfriend",
+      "description": "Protective and reassuring",
+      "avatar": "❤️",
+      "color": "from-purple-500 to-indigo-500"
+    }
+  },
+  "reviews": {
+    "heading": "Loved by",
+    "highlight": "Teams Worldwide",
+    "subheading": "See what our users say about transforming their scheduling experience.",
+    "items": [
+      {
+        "name": "Sarah Chen",
+        "role": "Project Coordinator",
+        "content": "NeChaos helps me stay focused by taking full control of my tasks and plans. I no longer need to memorize everything — it keeps me on track and reminds me when it matters.",
+        "avatar": "👩‍💼",
+        "rating": 5
+      },
+      {
+        "name": "Marcus Johnson",
+        "role": "Remote Consultant",
+        "content": "The timezone adaptation is seamless. I travel often, and NeChaos always shows my events in local time. No confusion, no missed meetings.",
+        "avatar": "👨‍💻",
+        "rating": 5
+      },
+      {
+        "name": "Elena Rodriguez",
+        "role": "Productive Minimalist",
+        "content": "What I love most is the mental clarity. I open the calendar, and everything I need is laid out simply — with reminders, priorities, and zero clutter.",
+        "avatar": "👩‍🚀",
+        "rating": 5
+      }
+    ],
+    "cta": {
+      "title": "Join the satisfied users!",
+      "text": "Experience the difference that intelligent scheduling can make.",
+      "button": "Get Started Today"
+    }
+  },
+  "pricing": {
+    "heading": "Simple, Transparent",
+    "highlight": "Pricing",
+    "subheading": "Start free, upgrade when you need more power. No hidden fees, cancel anytime.",
+    "plans": [
+      {
+        "name": "Free",
+        "price": "$0",
+        "period": "forever",
+        "popular": false,
+        "features": [
+          "Up to 50 events per month",
+          "Basic scheduling assistant",
+          "2 timezone support",
+          "Email reminders",
+          "Mobile app access"
+        ]
+      },
+      {
+        "name": "Pro",
+        "price": "$12",
+        "period": "per month",
+        "popular": true,
+        "features": [
+          "Unlimited events",
+          "AI personality modes",
+          "Unlimited timezone support",
+          "Conflict prevention",
+          "Upcoming: calendar integrations",
+          "Priority support",
+          "Usage analytics"
+        ]
+      }
+    ],
+    "popularBadge": "Most Popular",
+    "button": {
+      "free": "Get Started Free",
+      "pro": "Start Pro Trial"
+    },
+    "note": "All plans include 24/7 support, 99.9% uptime guarantee, and enterprise-grade security.",
+    "benefits": [
+      "30-day money-back guarantee",
+      "Cancel anytime",
+      "No setup fees"
+    ]
+  },
+  "faq": {
+    "heading": "Frequently Asked",
+    "highlight": "Questions",
+    "subheading": "Got questions? We've got answers. Here are the most common questions about NeChaos.",
+    "items": [
+      {
+        "question": "How does the AI assistant understand my scheduling preferences?",
+        "answer": "Our AI learns from your past scheduling patterns, meeting preferences, and feedback to make increasingly accurate suggestions. It considers factors like your preferred meeting times, buffer periods, and work-life balance preferences."
+      },
+      {
+        "question": "Can I change the AI personality after setting it up?",
+        "answer": "Absolutely! You can switch between different AI personalities anytime in your settings. Each personality maintains the same scheduling intelligence but communicates in their unique style."
+      },
+      {
+        "question": "How does timezone handling work for international teams?",
+        "answer": "NeChaos automatically detects and converts time zones for all participants. It shows meeting times in everyone's local timezone and prevents scheduling conflicts due to timezone confusion."
+      },
+      {
+        "question": "What calendars can I integrate with NeChaos?",
+        "answer": "Integrations are coming soon. We plan to support Google Calendar, Outlook, Apple Calendar, and most CalDAV-compatible calendar services."
+      },
+      {
+        "question": "Is my calendar data secure and private?",
+        "answer": "Yes, we use enterprise-grade encryption and never share your personal data. NeChaos keeps your data safe and only uses local processing for AI when possible."
+      }
+    ],
+    "support": {
+      "title": "Still have questions?",
+      "description": "Our support team is here to help you get the most out of NeChaos.",
+      "button": "Contact Support"
+    }
+  },
+  "footer": {
+    "brandDescription": "The smart calendar with AI assistant that makes scheduling effortless and intelligent.",
+    "social": {
+      "twitterUrl": "https://twitter.com/yourhandle",
+      "githubUrl": "https://github.com/yourrepo",
+      "linkedinUrl": "https://linkedin.com/company/yourcompany"
+    },
+    "product": {
+      "title": "Product",
+      "links": ["Features", "Pricing", "API", "Integrations", "Changelog"]
+    },
+    "company": {
+      "title": "Company",
+      "links": ["About Us", "Careers", "Blog", "Press", "Partners"]
+    },
+    "contact": {
+      "title": "Contact",
+      "email": "hello@calendarik.com",
+      "phone": "+1 (555) 123-4567",
+      "address": {
+        "line1": "123 Innovation Street",
+        "line2": "San Francisco, CA 94105"
+      }
+    },
+    "copyright": "© 2025 NeChaos. All rights reserved.",
+    "legal": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to continue with your AI assistant",
+      "emailLabel": "Email Address",
+      "passwordLabel": "Password",
+      "placeholders": {
+        "email": "Enter your email",
+        "password": "Enter your password"
+      },
+      "buttons": {
+        "signIn": "Sign In",
+        "signUp": "Sign Up"
+      },
+      "footer": "Don't have an account?",
+      "alerts": {
+        "success": "Login successful! Redirecting…",
+        "error": "Invalid email or password"
+      }
+    },
+    "register": {
+      "title": "Join Us",
+      "subtitle": "Create your account to get started",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "timezone": "Timezone",
+      "gender": "Gender",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "placeholders": {
+        "fullName": "Enter your full name",
+        "email": "Enter your email",
+        "password": "Create a password",
+        "confirmPassword": "Confirm your password"
+      },
+      "buttons": {
+        "createAccount": "Create Account",
+        "signIn": "Sign in"
+      },
+      "alerts": {
+        "passwordMismatch": "Passwords do not match",
+        "passwordTooShort": "Password must be at least 6 characters long",
+        "registrationSuccess": "Registration successful! Redirecting…",
+        "registrationFailed": "Registration failed. Please try again."
+      },
+      "haveAccount": "Already have an account?"
+    }
+  },
+  "language": {
+    "select": "Language",
+    "en": "EN",
+    "ru": "RU",
+    "kz": "KZ"
+  },
+  "chat": {
+    "title": "NeChaos AI Chat",
+    "placeholder": "Tell me about your plans, tasks, or deadlines…",
+    "send": "Send message",
+    "voiceSimulated": "This is a simulated voice message transcription",
+    "quickMessages": [
+      "What’s my schedule today?",
+      "Schedule a meeting tomorrow at 3 PM",
+      "Show me free slots next week"
+    ],
+    "badges": [
+      "Calendar Integration",
+      "Smart Scheduling",
+      "Deadline Management"
+    ],
+    "mic": {
+      "start": "Start recording",
+      "stop": "Stop recording"
+    },
+    "errors": {
+      "loadHistory": "Failed to load chat history",
+      "loadChat": "Failed to load chat session",
+      "send": "Failed to send message",
+      "micPermission": "Unable to access microphone. Check permissions.",
+      "updatePersonality": "Failed to update personality"
+    }
+  },
+  "layout": {
+    "nav": {
+      "chat": "Chat",
+      "calendar": "Calendar",
+      "settings": "Settings",
+      "logout": "Logout",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu"
+    },
+    "settings": {
+      "title": "Settings",
+      "name": "Name",
+      "email": "Email",
+      "timezone": "Timezone",
+      "gender": "Gender"
+    }
+  }
+}

@@ -1,9 +1,12 @@
 import React from 'react';
 import { Calendar, Mail, Phone, MapPin, Twitter, Github, Linkedin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gray-900 text-white px-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main footer content */}
         <div className="py-16 grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -13,10 +16,10 @@ const Footer: React.FC = () => {
               <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-3 rounded-2xl mr-4">
                 <Calendar className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold">Calendarik</span>
+              <span className="text-2xl font-bold">NeChaos</span>
             </div>
             <p className="text-gray-400 leading-relaxed mb-6">
-              The smart calendar with AI assistant that makes scheduling effortless and intelligent.
+              {t('footer.brandDescription')}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="bg-gray-800 p-3 rounded-xl hover:bg-gray-700 transition-colors">
@@ -33,7 +36,7 @@ const Footer: React.FC = () => {
 
           {/* Product column */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Product</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('footer.product.title')}</h3>
             <ul className="space-y-4 text-gray-400">
               <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
@@ -45,7 +48,7 @@ const Footer: React.FC = () => {
 
           {/* Company column */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Company</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('footer.company.title')}</h3>
             <ul className="space-y-4 text-gray-400">
               <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
@@ -57,7 +60,7 @@ const Footer: React.FC = () => {
 
           {/* Contact column */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Contact</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('footer.contact.title')}</h3>
             <ul className="space-y-4 text-gray-400">
               <li className="flex items-center">
                 <Mail className="w-4 h-4 mr-3" />
@@ -86,12 +89,12 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-800 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2024 Calendarik. All rights reserved.
+                {t('footer.copyright')}
             </div>
             <div className="flex space-x-6 text-gray-400 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footer.legal.privacy')}</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footer.legal.terms')}</a>
+              <a href="#" className="hover:text-white transition-colors">{t('footer.legal.cookies')}</a>
             </div>
           </div>
         </div>

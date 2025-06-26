@@ -39,14 +39,3 @@ class ChatResponse(ChatBase):
 
 class ChatList(BaseModel):
     chats: List[ChatResponse]
-
-class AIChatRequest(BaseModel):
-    message: str
-    personality: Optional[str] = None
-    language: Optional[str] = None
-    chat_id: Optional[int] = None  # None для нового чата
-
-class AIChatResponse(BaseModel):
-    message: str
-    chat_id: int
-    title: Optional[str] = None  # Для нового чата 

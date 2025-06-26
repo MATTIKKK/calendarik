@@ -19,7 +19,6 @@ from app.utils.time import validate_and_convert_times, to_local
 
 router = APIRouter()
 
-
 @router.post(
     "/events",
     response_model=CalendarEventResponse,
@@ -30,22 +29,23 @@ def create_event(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> CalendarEventResponse:
-    # Конвертируем и валидируем времена
+    print("event_in in create_event", event_in)
+    
     start_utc, end_utc = validate_and_convert_times(
         start_time=event_in.start_time,
         end_time=event_in.end_time,
         user_tz=current_user.timezone,
     )
 
-    # Создаём новый объект
     new_ev = CalendarEvent(
         owner_id=current_user.id,
         start_time=start_utc,
         end_time=end_utc,
         **event_in.dict(exclude={"start_time", "end_time"}),
     )
+    
+    print("new_ev in create_event", new_ev)
 
-    # Сохраняем в БД с обработкой ошибок
     try:
         db.add(new_ev)
         db.commit()
@@ -83,7 +83,6 @@ def list_events(
                 CalendarEvent.end_time >= start_utc,
             ),
         )
-    # только начало
     elif start_utc is not None:
         q = q.filter(
             or_(
@@ -91,11 +90,12 @@ def list_events(
                 CalendarEvent.end_time >= start_utc,
             )
         )
-    # только конец
     elif end_utc is not None:
         q = q.filter(CalendarEvent.start_time < end_utc)
 
     events = q.order_by(CalendarEvent.start_time).all()
+    
+    print("events in get_events", events)
     return [to_local(ev, current_user.timezone) for ev in events]
 
 
@@ -107,6 +107,7 @@ def get_event(
     ev: CalendarEvent = Depends(get_existing_event),
     current_user: User = Depends(get_current_user),
 ) -> CalendarEventResponse:
+    
     return to_local(ev, current_user.timezone)
 
 
@@ -137,7 +138,6 @@ def update_event(
             user_tz=tz,
         )[1]
 
-    # Проверяем корректность интервала
     if (
         ("start_time" in data or "end_time" in data)
         and data.get("end_time", ev.end_time) is not None
@@ -160,6 +160,8 @@ def update_event(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update event",
         )
+        
+    print("ev in update_event", ev)
 
     return to_local(ev, tz)
 
@@ -172,6 +174,8 @@ def delete_event(
     ev: CalendarEvent = Depends(get_existing_event),
     db: Session = Depends(get_db),
 ):
+    print("ev in delete_event", ev)
+    
     try:
         db.delete(ev)
         db.commit()

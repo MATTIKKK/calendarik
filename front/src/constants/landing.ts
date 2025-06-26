@@ -1,27 +1,4 @@
-import { Feature, PricingPlan, Review } from "../types/landing";
-
-export const features: Feature[] = [
-  {
-    icon: 'Globe',
-    title: 'Multi-Timezone Support',
-    description: 'Adapt automatically to any timezone — all events are shown in your local time, no matter where you are.'
-  },
-  {
-    icon: 'Brain',
-    title: 'Mental Clarity by Design',
-    description: 'Calendarik takes full control of your tasks so you don’t have to hold everything in your head. Your mind stays clear and focused.'
-  },
-  {
-    icon: 'Bell',
-    title: 'Smart Reminders & Risk Reduction',
-    description: 'Always stay ahead of your day. Calendarik reminds you of every plan and prevents missed events or loss of control.'
-  },
-  {
-    icon: 'Zap',
-    title: 'Coming Soon: Smart Integrations',
-    description: 'Integrations with Google Calendar, Outlook and more — so your plans always stay in sync.'
-  }
-];
+import { PricingPlan, Review } from "../types/landing";
 
 export const reviews: Review[] = [
   {

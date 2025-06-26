@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, status
 from zoneinfo import ZoneInfo
 from app.schemas.calendar import CalendarEventResponse
@@ -26,12 +26,23 @@ def to_utc(dt: datetime, user_tz: str) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
-def validate_and_convert_times(start_time: datetime, end_time: Optional[datetime], user_tz: str) -> Tuple[datetime, Optional[datetime]]:
+def validate_and_convert_times(
+    start_time: datetime,
+    end_time: Optional[datetime],
+    user_tz: str
+) -> Tuple[datetime, datetime]:
+    # конвертируем start
     start_utc = to_utc(start_time, user_tz)
-    end_utc = to_utc(end_time, user_tz) if end_time else None
 
-    if end_utc is not None and end_utc <= start_utc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="`end_time` must be after `start_time`.")
+    # если end_time не передали — дефолт +1 час
+    if end_time is None:
+        end_utc = start_utc + timedelta(hours=1)
+    else:
+        end_utc = to_utc(end_time, user_tz)
+        if end_utc <= start_utc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="`end_time` must be after `start_time`."
+            )
 
     return start_utc, end_utc

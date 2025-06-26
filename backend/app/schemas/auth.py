@@ -7,6 +7,7 @@ class RegisterData(BaseModel):
     full_name: str
     timezone: str
     gender: str
+    preferred_language: str = "ru"
     chat_personality: str = "assistant"
 
 class UserBase(BaseModel):
@@ -15,7 +16,7 @@ class UserBase(BaseModel):
     gender: Optional[str] = None
     timezone: Optional[str] = None
     chat_personality: Optional[str] = "assistant"
-
+    preferred_language: Optional[str] = "ru"
 class UserCreate(UserBase):
     password: str
 

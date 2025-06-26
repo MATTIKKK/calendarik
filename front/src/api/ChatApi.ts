@@ -11,7 +11,7 @@ export async function fetchChatHistory(
   token: string
 ): Promise<Message[]> {
   const { data } = await axios.get<ChatMessage[]>(
-    `${API_URL}/api/chat/${chatId}/messages`,
+    `${API_URL}/api/chat/me/messages`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
 

@@ -6,6 +6,7 @@ export interface RegisterData {
   full_name: string;
   timezone: string;
   gender: string;
+  preferred_language: string;
 }
 
 export interface AuthContextType {

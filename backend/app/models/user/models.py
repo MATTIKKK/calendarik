@@ -13,6 +13,7 @@ class User(BaseModel):
     gender = Column(String, default="other")
     chat_personality = Column(String, default="assistant")
     is_active = Column(Boolean, default=True)
+    preferred_language = Column(String, default="ru", nullable=False)
     
      # 1-к-1: ссылка на единственный чат
     main_chat = relationship(
