@@ -2,26 +2,16 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    build: ./
     container_name: calendarik-backend
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./:/app
     env_file:
-      - ./backend/.env
+      - ./.env
     depends_on:
       - db
-
-  frontend:
-    build: ./front
-    container_name: calendarik-frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./front:/app
-    stdin_open: true
-    tty: true
 
   db:
     image: postgres:15
