@@ -8,11 +8,10 @@ import {
   AlertCircle,
   // X,
 } from 'lucide-react';
-import { Event } from '../../types';
+import { Event } from '../../types/event';
 import { DayScheduleModal } from './DayScheduleModal';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
-import { API_URL } from '../../config';
 
 export const CalendarView: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -42,7 +41,7 @@ export const CalendarView: React.FC = () => {
       );
 
       const response = await axios.get(
-        `${API_URL}/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
+        `/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

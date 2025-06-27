@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../../contexts/AuthContext';
-import { API_URL } from '../../../config';
 import { fetchChatHistory } from '../../../api/ChatApi';
 import { personalities } from '../../../constants/personalities';
 import { Message } from '../../../types/message';
@@ -62,7 +61,7 @@ export const ChatInterface: React.FC = () => {
   // создание/получение chatId
   useEffect(() => {
     if (!token) return;
-    axios.get<Chat>(`${API_URL}/api/chat/me`, {
+    axios.get<Chat>(`/api/chat/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     .then(res => setChatId(res.data.id))
@@ -82,7 +81,7 @@ export const ChatInterface: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const { data } = await axios.post(`${API_URL}/api/chat/message`, {
+      const { data } = await axios.post(`/api/chat/message`, {
         message: content,
         personality: personalityId,
         chat_id: chatId ?? undefined,
@@ -143,7 +142,7 @@ export const ChatInterface: React.FC = () => {
     if (!token) return;
     setPersonalityId(newId);
     try {
-      const result = await axios.put(`${API_URL}/api/user/me/personality`, { personality: newId }, {
+      const result = await axios.put(`/api/user/me/personality`, { personality: newId }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("result in chat personality", result)

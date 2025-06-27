@@ -11,7 +11,7 @@ export async function fetchChatHistory(
   token: string
 ): Promise<Message[]> {
   const { data } = await axios.get<ChatMessage[]>(
-    `${API_URL}/api/chat/me/messages`,
+    `/api/chat/me/messages`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
 
@@ -45,7 +45,7 @@ export async function sendChatMessage(
   token: string
 ): Promise<SendMessageResponse> {
   const { data } = await axios.post<SendMessageResponse>(
-    `${API_URL}/api/chat/message`,
+    `/api/chat/message`,
     payload,
     { headers: { Authorization: `Bearer ${token}` } }
   );
