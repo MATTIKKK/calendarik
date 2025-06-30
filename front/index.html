@@ -2,19 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7SFTKYWJX4"></script>
-
-    <!-- 2️⃣  Инициализация dataLayer и базовая настройка -->
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-7SFTKYWJX4"
+    ></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
+      function gtag() {
+        dataLayer.push(arguments);
+      }
       gtag('js', new Date());
-      /* базовый конфиг: автоматически фиксирует первое посещение */
-      gtag('config', 'G-7SFTKYWJX4', {
-        send_page_view: true        // для SPA можно оставить true: GA4 сам ловит pushState
-      });
+
+      gtag('config', 'G-7SFTKYWJX4');
     </script>
-    
+
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta
       name="viewport"
