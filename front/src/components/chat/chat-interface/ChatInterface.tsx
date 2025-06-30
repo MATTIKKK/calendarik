@@ -17,6 +17,7 @@ import { MessageBubble } from '../message-bubble/MessageBubble';
 import { TypingIndicator } from '../typing-indicator/TypingIndicator';
 import './chat-interface.css';
 import { useTranslation } from 'react-i18next';
+import { API_URL } from '../../../config';
 
 export const ChatInterface: React.FC = () => {
   const { t } = useTranslation();
@@ -51,7 +52,7 @@ export const ChatInterface: React.FC = () => {
       setPersonalityId(user.chat_personality);
     }
 
-  }, [user?.chat_personality])
+  }, [user])
 
   // автоскролл
   useEffect(() => {
@@ -61,7 +62,7 @@ export const ChatInterface: React.FC = () => {
   // создание/получение chatId
   useEffect(() => {
     if (!token) return;
-    axios.get<Chat>(`/api/chat/me`, {
+    axios.get<Chat>(`${API_URL}/api/chat/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     .then(res => setChatId(res.data.id))
@@ -81,7 +82,7 @@ export const ChatInterface: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const { data } = await axios.post(`/api/chat/message`, {
+      const { data } = await axios.post(`${API_URL}/api/chat/message`, {
         message: content,
         personality: personalityId,
         chat_id: chatId ?? undefined,
