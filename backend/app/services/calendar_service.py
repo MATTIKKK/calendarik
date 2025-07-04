@@ -155,27 +155,55 @@ class CalendarService:
         return free
 
     # ───────────────────— форматирование —────────────────────────
-    @staticmethod
-    def format_events_for_ai(events: List[CalendarEvent]) -> str:
+    def format_events_for_ai(
+        self,
+        events: List[CalendarEvent],
+        hide_past: bool = True,
+    ) -> str:
         if not events:
             return "— нет событий —"
-        out: list[str] = []
-        for ev in events:        
-            st_raw = ev.start_time
-            et_raw = ev.end_time
-            if st_raw.tzinfo is None:
-                st_raw = st_raw.replace(tzinfo=timezone.utc)
-            if et_raw and et_raw.tzinfo is None:
-                et_raw = et_raw.replace(tzinfo=timezone.utc)
 
-            owner_tz = ZoneInfo(getattr(ev, "owner").timezone)
-            local_start = st_raw.astimezone(owner_tz)
-            local_end   = et_raw.astimezone(owner_tz) if et_raw else None
+        tz = ZoneInfo(self.user.timezone)
+        now_loc = datetime.now(tz)
 
-            s = local_start.strftime("%H:%M")
-            e = local_end.strftime("%H:%M") if local_end else ""
-            out.append(f"• {s}-{e or ''}  {ev.title}")
-        return "\n".join(out)
+        offset_hours = int(tz.utcoffset(now_loc).total_seconds() // 3600)
+        tz_header = f"( {self.user.timezone}, UTC{offset_hours:+d} )"
+
+        loc_evt: list[tuple[datetime, datetime | None, str]] = []
+        for ev in events:
+            # ←––––––––––––––––––––––––––––––––––––––––––––––––––
+            #   если tzinfo отсутствует → считаем локальным
+            # ––––––––––––––––––––––––––––––––––––––––––––––––––⚠️
+            if ev.start_time.tzinfo is None:
+                start = ev.start_time.replace(tzinfo=tz)
+            else:
+                start = ev.start_time.astimezone(tz)
+
+            if ev.end_time:
+                if ev.end_time.tzinfo is None:          # ⚠️ то же для end_time
+                    end = ev.end_time.replace(tzinfo=tz)
+                else:
+                    end = ev.end_time.astimezone(tz)
+            else:
+                end = None
+            # –––––––––––––––––––––––––––––––––––––––––––––––––––
+
+            if hide_past and end and end < now_loc:
+                continue
+            loc_evt.append((start, end, ev.title))
+
+        if not loc_evt:
+            return "— нет событий —"
+
+        loc_evt.sort(key=lambda t: t[0])
+
+        lines = [tz_header]
+        for start, end, title in loc_evt:
+            s = start.strftime("%H:%M")
+            e = end.strftime("%H:%M") if end else ""
+            lines.append(f"• {s}{'-'+e if e else ''}  {title}")
+
+        return "\n".join(lines)
 
     @staticmethod
     def format_free_slots_for_ai(slots: List[dict]) -> str:

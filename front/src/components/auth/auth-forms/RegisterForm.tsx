@@ -4,7 +4,6 @@ import {
   Mail,
   Lock,
   User,
-  Globe,
   Eye,
   EyeOff,
   UserPlus,
@@ -13,12 +12,10 @@ import {
 import './auth-forms.css';
 import { RegisterData } from '../../../types/auth';
 import { useAuth } from '../../../contexts/AuthContext';
-import moment from 'moment-timezone';
 import { Alert } from '../../alert/Alert';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
-const timezones = moment.tz.names().sort();
+const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
 
 export const RegisterForm: React.FC<{
   onSwitchToLogin: () => void;
@@ -29,7 +26,7 @@ export const RegisterForm: React.FC<{
     password: '',
     full_name: '',
     preferred_language: i18n.language,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: browserTz,
     gender: 'male',
   });
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -176,24 +173,6 @@ export const RegisterForm: React.FC<{
                 <option value="other">
                   {t('auth.register.genderOther', 'Other')}
                 </option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">{t('auth.register.timezone')}</label>
-            <div className="input-group">
-              <Globe className="input-icon-left" size={20} />
-              <select
-                value={formData.timezone}
-                onChange={(e) => update('timezone', e.target.value)}
-                className="form-select with-left-icon"
-              >
-                {timezones.map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz}
-                  </option>
-                ))}
               </select>
             </div>
           </div>
