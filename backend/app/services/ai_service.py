@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from zoneinfo import ZoneInfo
 
-from openai import AsyncOpenAI, OpenAIError
+from openai import AsyncAzureOpenAI, OpenAIError
 
 from app.core.config import settings
 from app.services.calendar_service import CalendarService
@@ -16,11 +16,12 @@ class AIService:
     """Wrapper around OpenAI Chat API with calendar awareness."""
 
     def __init__(self) -> None:
-        self.client = AsyncOpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url="https://api.openai.com/v1"
+        self.client = AsyncAzureOpenAI(
+            api_key=settings.AZURE_OPENAI_API_KEY,
+            azure_endpoint=settings.ENDPOINT_URL,
+            api_version="2025-01-01-preview",
         )
-        self.model: str = settings.OPENAI_MODEL
+        self.model: str = settings.DEPLOYMENT_NAME
 
     def _create_system_prompt(
         self,
@@ -49,8 +50,7 @@ class AIService:
                 "Feel free to add emojis at the start of each bullet to show care."
             ),
         }
-        
-        
+
         gender = {
             "male":   "The user is male; adapt your responses accordingly.",
             "female": "The user is female; adapt your responses accordingly.",

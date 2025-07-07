@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     OPENAI_TEMPERATURE: float = 0.7
     OPENAI_MAX_TOKENS: int = 500
 
+    ENDPOINT_URL: str
+    AZURE_OPENAI_API_KEY: str
+    DEPLOYMENT_NAME: str = "gpt-4.1"
+
     # === Email settings (for future use) ===
     SMTP_TLS: bool = True
     SMTP_PORT: Optional[int] = None
