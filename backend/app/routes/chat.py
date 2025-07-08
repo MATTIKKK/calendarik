@@ -43,6 +43,7 @@ async def send_message(
 
     analysis = await ai_service.analyze_message(
         message=req.message,
+        chat_id=chat.id,
         personality=current_user.chat_personality,
         user_gender=current_user.gender,
         language=current_user.preferred_language,

@@ -42,7 +42,7 @@ export const CalendarView: React.FC = () => {
       );
 
       const response = await axios.get(
-        `${API_URL}/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
+        `/api/calendar/events?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -70,7 +70,7 @@ export const ChatInterface: React.FC = () => {
   useEffect(() => {
     if (!token) return;
     axios
-      .get<Chat>(`${API_URL}/api/chat/me`, {
+      .get<Chat>(`/api/chat/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setChatId(res.data.id))
@@ -107,7 +107,7 @@ export const ChatInterface: React.FC = () => {
 
     try {
       const { data } = await axios.post(
-        `${API_URL}/api/chat/message`,
+        `/api/chat/message`,
         {
           message: content,
           personality: personalityId,

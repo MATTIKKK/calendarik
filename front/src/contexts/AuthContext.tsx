@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) return logout();
 
-      const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {
+      const { data } = await axios.post(`/api/auth/refresh`, {
         refresh_token: refreshToken,
       });
 
@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) return;
 
-      const { data } = await axios.get(`${API_URL}/api/user/me`, {
+      const { data } = await axios.get(`/api/user/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
 
@@ -112,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     body.append('username', email);
     body.append('password', password);
 
-    const { data } = await axios.post(`${API_URL}/api/auth/login`, body, {
+    const { data } = await axios.post(`/api/auth/login`, body, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
@@ -123,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const register = async (form: RegisterData) => {
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/api/auth/register`, form);
+      await axios.post(`/api/auth/register`, form);
       await login(form.email, form.password);
     } finally {
       setLoading(false);

@@ -7,21 +7,44 @@ from typing import Any, Dict, Optional
 from zoneinfo import ZoneInfo
 
 from openai import AsyncAzureOpenAI, OpenAIError
+from app.services.openai_service import ask_gpt
 
 from app.core.config import settings
 from app.services.calendar_service import CalendarService
+from app.services.memory_service import MemoryStore
+
+
 
 
 class AIService:
     """Wrapper around OpenAI Chat API with calendar awareness."""
+    
+    def build_calendar_context(self, calendar_service, until_hours: int = 24) -> str:
+        user_tz = ZoneInfo(calendar_service.user.timezone)
+        now_local   = datetime.now(user_tz)
+        until_local = now_local + timedelta(hours=until_hours)
 
+        # берём события за ближайшие N часов
+        events = calendar_service.list_events_between(now_local, until_local)
+
+        # сортируем по началу
+        events.sort(key=lambda ev: ev.start_time)
+
+        # форматируем
+        lines = []
+        for ev in events:
+            start = ev.start_time.astimezone(user_tz)
+            end   = ev.end_time.astimezone(user_tz) if ev.end_time else None
+            if end:
+                lines.append(f"{start:%Y-%m-%d %H:%M}–{end:%H:%M} – {ev.title}")
+            else:
+                lines.append(f"{start:%Y-%m-%d %H:%M} – {ev.title}")
+        return "\n".join(lines)
+    
+    
     def __init__(self) -> None:
-        self.client = AsyncAzureOpenAI(
-            api_key=settings.AZURE_OPENAI_API_KEY,
-            azure_endpoint=settings.ENDPOINT_URL,
-            api_version="2025-01-01-preview",
-        )
         self.model: str = settings.DEPLOYMENT_NAME
+        self.memory = MemoryStore()     
 
     def _create_system_prompt(
         self,
@@ -66,8 +89,7 @@ class AIService:
             "• Show schedules for today, tomorrow, a weekday, or the current week.\n"
             "• If the user asks about a specific time, show the schedule for that time.\n"
             "• If the user asks about a specific day, show the schedule for that day.\n"
-            "• Always present times in **24-hour format** (e.g., 15:00, not 3 PM).\n"
-            "and list each event on a new line, preceded by “- ”.\n"
+            "• Always present times in **24-hour format** (e.g., 15:00, not 3 PM) and list each event on a new line, preceded by “- ”.\n"
             "  If the persona is 'girlfriend' or 'boyfriend', you may prepend a fitting emoji to each bullet.\n"
             "• Suggest free/available time slots.\n"
             "• Replies must be concise; avoid filler phrases such as “I'm always here” or similar supportive lines.\n"
@@ -77,7 +99,13 @@ class AIService:
             "       Wrap exactly like <calendar_data>{ ... }</calendar_data>\n"
             "    2) For deletion, return JSON with keys: title, date (YYYY-MM-DD).\n"
             "       Wrap exactly like <calendar_delete>{ ... }</calendar_delete>\n"
-            "    3) After a blank line, write the friendly reply. Never mention the tags or JSON.\n"
+            "    2b) To delete a *specific* event on that date, add either:\n"
+            "        • \"start\": ISO-datetime of the event’s start (e.g., \"2025-07-09T11:00\") **or**\n"
+            "        • \"event_id\": numeric id of the event (preferred if shown).\n"
+            "    2c) If neither \"start\" nor \"event_id\" is provided and multiple matches exist,\n"
+            "        ask the user to clarify which one to delete before returning <calendar_delete>.\n"
+            "    3) After a blank line, write the friendly reply. **Never** mention the tags or JSON.\n"
+            "before showing list of events show date of the day in first line with format like 17 then name of month, and year"
         )
 
         parts = [
@@ -94,6 +122,7 @@ class AIService:
         self,
         message: str,
         *,
+        chat_id: int,
         personality: str = "assistant",
         user_gender: str = "other",
         language: str = "English",
@@ -105,32 +134,6 @@ class AIService:
             lang = detected if detected in (
                 "English", "Russian") else "English"
 
-            # 2) Ключевые слова
-            KW = {
-                "English": {
-                    "sched": ["schedule", "event", "events", "plan", "plans"],
-                    "today": ["today"],     "tomorrow": ["tomorrow"],
-                    "week": ["week"],       "free": ["free time", "available", "free slot"],
-                    "next": ["next", "coming"],
-                    "weekday": {
-                        "monday": 0, "tuesday": 1, "wednesday": 2,
-                        "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6,
-                    },
-                },
-                "Russian": {
-                    "sched": ["расписание", "планы", "дела", "события"],
-                    "today": ["сегодня"],   "tomorrow": ["завтра"],
-                    "week": ["неделя", "на неделе"], "free": ["окно", "свободно", "есть ли время"],
-                    "next": ["следующ"],
-                    "weekday": {
-                        "понедельник": 0, "пн": 0, "вторник": 1, "вт": 1, "среда": 2, "ср": 2,
-                        "четверг": 3, "чт": 3, "пятница": 4, "пт": 4, "суббота": 5, "сб": 5, "воскресенье": 6, "вс": 6,
-                    },
-                },
-            }
-            keys = KW[lang]
-            lower_msg = message.lower()
-            def has(arr): return any(w in lower_msg for w in arr)
 
             # 3) Сейчас по часовому поясу пользователя
             user_tz = ZoneInfo(
@@ -139,51 +142,33 @@ class AIService:
             today_str = now.strftime("%Y-%m-%d")
             today_line = f"Today is {today_str} in the user's timezone.\n"
 
-            # 4) На какую дату спрашивают?
-            target_date: Optional[datetime] = None
-            if has(keys["today"]):
-                target_date = now
-            elif has(keys["tomorrow"]):
-                target_date = now + timedelta(days=1)
-            else:
-                next_flag = has(keys["next"])
-                for word, idx in keys["weekday"].items():
-                    if word in lower_msg:
-                        delta = (idx - now.weekday()) % 7 or 7
-                        if next_flag:
-                            delta += 7
-                        target_date = now + timedelta(days=delta)
-                        break
-
+            
             # 5) Собираем контекст календаря
             calendar_context = ""
-            if calendar_service and target_date:
-                evs = calendar_service.get_events_for_day(target_date)
-                day_str = target_date.strftime("%A, %d %B")
-                calendar_context = f"\nSchedule for {day_str}:\n"\
-                    f"{calendar_service.format_events_for_ai(evs)}"
-            elif calendar_service and has(keys["week"]):
-                evs = calendar_service.get_events_for_week(now)
-                calendar_context = "\nThis week's schedule:\n"\
-                                   f"{calendar_service.format_events_for_ai(evs)}"
-            if calendar_service and has(keys["free"]):
-                slots = calendar_service.find_free_slots(now)
-                calendar_context += "\nAvailable time slots:\n"\
-                                    f"{calendar_service.format_free_slots_for_ai(slots)}"
+            
+            if calendar_service:
+                calendar_context = self.build_calendar_context(calendar_service, until_hours=24)
+                if calendar_context:
+                    calendar_context = (
+                        "Here are the user's upcoming events (local time):\n"
+                        + calendar_context + "\n"
+                    )
+            
+            history = self.memory.get(chat_id)[:]        # копия (чтобы не портить память)
+            history.append({"role": "user", "content": message})
+   
 
-            # 6) Запрос к OpenAI
-            completion = await self.client.chat.completions.create(
-                model=self.model,
+            ai_raw = await ask_gpt(
                 messages=[
                     {"role": "system", "content": self._create_system_prompt(
-                        personality, user_gender, language, today_line, calendar_context
+                        personality, user_gender, lang, today_line, calendar_context
                     )},
-                    {"role": "user",   "content": message},
+                    *history, 
                 ],
+                model=self.model,
                 temperature=settings.OPENAI_TEMPERATURE,
                 max_tokens=settings.OPENAI_MAX_TOKENS,
             )
-            ai_raw = completion.choices[0].message.content or ""
 
             # 7) Парсинг JSON-объектов
             r_create = re.compile(
@@ -193,12 +178,20 @@ class AIService:
             m_c = r_create.search(ai_raw)
             m_d = r_delete.search(ai_raw)
 
-            calendar_data = json.loads(m_c.group(1)) if m_c else None
-            delete_params = json.loads(m_d.group(1)) if m_d else None
+            try:
+                calendar_data = json.loads(m_c.group(1)) if m_c else None
+            except json.JSONDecodeError:
+                calendar_data = None
+            try:
+                delete_params = json.loads(m_d.group(1)) if m_d else None
+            except json.JSONDecodeError:
+                delete_params = None
 
             clean_text = r_delete.sub('', r_create.sub('', ai_raw)).strip()
+            
+            self.memory.add(chat_id, "assistant", clean_text)  
 
-            should_save = calendar_data is not None
+            should_save = calendar_data and all(k in calendar_data for k in ("title","start","end"))
 
             # 9) Применение в БД
             event_id = None
@@ -219,7 +212,7 @@ class AIService:
                             "was_deleted": False,
                         }
                 # — удаляем
-                elif delete_params:
+                if delete_params:
                     try:
                         was_deleted = calendar_service.delete_event_by_title_and_date(
                             delete_params)
@@ -257,15 +250,16 @@ class AIService:
 
     async def detect_language(self, text: str) -> str:
         try:
-            resp = await self.client.chat.completions.create(
-                model=self.model,
+            lang = await ask_gpt(
                 messages=[
                     {"role": "system", "content":
                      "Detect the language of the following text and respond with just the language name in English."},
                     {"role": "user", "content": text},
                 ],
-                temperature=0, max_tokens=10
+                max_tokens=10,
+                temperature=0
             )
-            return resp.choices[0].message.content.strip()
+            return lang.strip()
+        
         except:
             return "English"

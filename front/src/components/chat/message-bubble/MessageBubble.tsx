@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bot, User } from 'lucide-react';
-import { Message } from '../../../types';
+import { Message } from '../../../types/message';
 import './message-bubble.css';          // ← подключаем тот же CSS, где лежат стили чата
 
 interface MessageBubbleProps {
@@ -11,7 +11,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.sender === 'user';
 
   return (
-    <div className={`bubble-row ${isUser ? 'user' : 'assistant'}`}>
+    <div className={`bubble-row ${isUser ? 'user' : 'assistant'}`} style={{ whiteSpace: "pre-line" }}   >
       <div className={`bubble-wrap ${isUser ? 'user' : 'assistant'}`}>
         {/* аватар */}
         <div className={`avatar ${isUser ? 'user' : 'assistant'}`}>
