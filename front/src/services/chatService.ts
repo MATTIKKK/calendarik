@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Chat, SendMessageRequest, SendMessageResponse } from '../types/chat';
+import { API_URL } from '../config';
 
 // const API_URL = 'http://128.251.224.196:8000/api';
 

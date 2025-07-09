@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Clock, AlertCircle, Calendar, Plus } from 'lucide-react';
-import { Event } from '../../types';
+import { Event } from '../../types/event';
 
 interface DayScheduleModalProps {
   date: Date;
@@ -35,8 +35,8 @@ export const DayScheduleModal: React.FC<DayScheduleModalProps> = ({ date, events
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
       <div className="bg-[var(--color-bg)] rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        {/* Header - теперь sticky */}
+        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b bg-[var(--color-bg)]">
           <div>
             <h2 className="text-xl font-bold text-[var(--color-text)]">
               {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -91,21 +91,23 @@ export const DayScheduleModal: React.FC<DayScheduleModalProps> = ({ date, events
               <Calendar className="w-12 h-12 text-[var(--color-secondary-light)] mx-auto mb-4" />
               <h3 className="text-lg font-medium text-[var(--color-text)] mb-2">No events scheduled</h3>
               <p className="text-[var(--color-text-light)] mb-4">This day is free for new appointments</p>
-              <button className="px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center space-x-2 mx-auto">
+              {/* Закомментированная кнопка "Add Event" */}
+              {/* <button className="px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center space-x-2 mx-auto">
                 <Plus className="w-4 h-4" />
                 <span>Add Event</span>
-              </button>
+              </button> */}
             </div>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - закомментирован, если не нужен с кнопкой Add New Event */}
         {events.length > 0 && (
           <div className="p-6 border-t bg-[var(--color-bg-gradient-end)]">
-            <button className="w-full px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center space-x-2">
+            {/* Закомментированная кнопка "Add New Event" */}
+            {/* <button className="w-full px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center space-x-2">
               <Plus className="w-4 h-4" />
               <span>Add New Event</span>
-            </button>
+            </button> */}
           </div>
         )}
       </div>

@@ -179,11 +179,11 @@ export const CalendarView: React.FC = () => {
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="ml-4 px-3 lg:px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center space-x-2"
+            {/* <button className="ml-4 px-3 lg:px-4 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all duration-200 flex items-center space-x-2"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Event</span>
-            </button>
+            </button> */}
           </div>
         </div>
 
