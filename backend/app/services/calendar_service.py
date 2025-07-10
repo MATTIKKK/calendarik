@@ -278,55 +278,23 @@ class CalendarService:
             raise # Перевыбрасываем исключение после отката транзакции
 
     # ───────────────── УДАЛЕНИЕ ─────────────────
-    def delete_event_by_id(self, event_id: int) -> bool:
-        """
-        Удаляет событие по его числовому идентификатору (event_id).
-        """
-        ev = (
-            self.db.query(CalendarEvent)
-            .filter(
-                CalendarEvent.owner_id == self.user.id,
-                CalendarEvent.id == event_id
-            )
-            .first()
-        )
-        if ev:
-            self.db.delete(ev)
-            self.db.commit()
-            return True
-        return False
-
-    # НОВЫЙ МЕТОД: Удаление события по названию, дате и точному времени начала
     def delete_event_by_title_and_date(self, params: Mapping[str, str]) -> bool:
-        """
-        Удаляет событие по его названию, дате и точному времени начала.
-        Используется, если delete_event_by_title_and_date нашел несколько совпадений.
-        """
         title = params.get("title", "").strip()
         date_raw = params.get("date")
-        start_raw = params.get("start") # Точное время начала (ISO-формат)
-
-        if not title or not date_raw or not start_raw:
-            raise ValueError("Title, date, and start time are all required for precise deletion.")
+        if not title or not date_raw:
+            raise ValueError("Both 'title' and 'date' are required")
 
         loc_midnight = datetime.fromisoformat(date_raw).replace(tzinfo=self.tz)
-        utc_start_of_day = loc_midnight.astimezone(timezone.utc)
-        utc_end_of_day   = utc_start_of_day + timedelta(days=1)
-
-        try:
-            # Парсим точное время начала события в UTC
-            specific_start_utc = isoparse(start_raw).astimezone(timezone.utc)
-        except ValueError:
-            raise ValueError("Invalid start time format provided for deletion.")
+        utc_start = loc_midnight.astimezone(timezone.utc)
+        utc_end   = utc_start + timedelta(days=1)
 
         ev = (
             self.db.query(CalendarEvent)
             .filter(
                 CalendarEvent.owner_id == self.user.id,
                 CalendarEvent.title.ilike(f"%{title}%"),
-                CalendarEvent.start_time == specific_start_utc, # Точное совпадение времени начала
-                CalendarEvent.start_time >= utc_start_of_day, # Убеждаемся, что в пределах дня
-                CalendarEvent.start_time <  utc_end_of_day,
+                CalendarEvent.start_time >= utc_start,
+                CalendarEvent.start_time <  utc_end,
             )
             .first()
         )

@@ -46,7 +46,7 @@ export const ChatInterface: React.FC = () => {
     if (!token || chatId === null) return;
     (async () => {
       try {
-        const msgs = await fetchChatHistory(chatId, token);
+        const msgs = await fetchChatHistory(token);
         setMessages(msgs);
       } catch (err) {
         console.error(t('chat.errors.loadHistory'), err);

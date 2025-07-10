@@ -22,7 +22,6 @@ from app.core.database import get_db
 router = APIRouter()
 ai_service = AIService()
 
-
 @router.post("/message", response_model=AIMessageResponse)
 async def send_message(
     req: AIMessageRequest,
@@ -105,5 +104,4 @@ def get_my_chat(
     chat_svc: ChatService = Depends(get_chat_service),
 ) -> ChatResponse:
 
-    print("chat_svc in get_my_chat", chat_svc)
     return chat_svc.get_or_create_chat()
