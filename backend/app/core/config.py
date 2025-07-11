@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
     OPENAI_TEMPERATURE: float = 0.7
     OPENAI_MAX_TOKENS: int = 500
+    
+    AZURE_SPEECH_KEY: str
+    AZURE_SPEECH_REGION: str
 
     ENDPOINT_URL: str
     AZURE_OPENAI_API_KEY: str
