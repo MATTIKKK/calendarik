@@ -17,6 +17,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.344.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.44.1",
     "moment-timezone": "^0.6.0",
     "react": "^18.3.1",
     "react-calendar": "^4.8.0",
